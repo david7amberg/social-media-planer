@@ -1,0 +1,84 @@
+{
+  "format": "social-media-plan",
+  "version": 1,
+  "projekt": {
+    "id": "muster-cafe",
+    "name": "Musterprojekt Café",
+    "kuerzel": "MC",
+    "farbe": "#D9468F"
+  },
+  "exportiert_am": "2026-10-01",
+  "eintraege": [
+    {
+      "id": "mc-01",
+      "typ": "post",
+      "nr": "01",
+      "titel": "Herbstkarte: die drei neuen Kuchen",
+      "datum": "2026-10-07",
+      "uhrzeit": "18:00",
+      "plattform": ["Instagram", "TikTok"],
+      "format": "Reel 15 s",
+      "status": "fertig"
+    },
+    {
+      "id": "mc-02",
+      "typ": "post",
+      "nr": "02",
+      "titel": "Hinter der Theke: so entsteht der Zimtknoten",
+      "datum": "2026-10-10",
+      "plattform": ["Instagram"],
+      "format": "Karussell 6 Slides",
+      "status": "in_arbeit"
+    },
+    {
+      "id": "mc-z1",
+      "typ": "todo",
+      "nr": "Z1",
+      "titel": "Fotos der Herbstkuchen liefern",
+      "datum": "2026-10-12",
+      "status": "offen",
+      "notiz": "Tageslicht, von oben und schräg"
+    },
+    {
+      "id": "mc-03",
+      "typ": "post",
+      "nr": "03",
+      "titel": "Frage der Woche: Hafer- oder Kuhmilch?",
+      "datum": "2026-10-14",
+      "uhrzeit": "12:30",
+      "plattform": ["Instagram", "TikTok", "YouTube Shorts"],
+      "format": "Short 20 s",
+      "status": "offen"
+    },
+    {
+      "id": "mc-z2",
+      "typ": "todo",
+      "nr": "Z2",
+      "titel": "Texte für Beitrag 04 freigeben",
+      "datum": "2026-10-15",
+      "status": "offen"
+    },
+    {
+      "id": "mc-04",
+      "typ": "post",
+      "nr": "04",
+      "titel": "Wochenend-Öffnungszeiten im Herbst",
+      "datum": "2026-10-17",
+      "plattform": ["Instagram"],
+      "format": "Story",
+      "status": "offen",
+      "notiz": "Mit Umfrage-Sticker"
+    },
+    {
+      "id": "mc-05",
+      "typ": "post",
+      "nr": "05",
+      "titel": "Ein Tag im Café in 30 Sekunden",
+      "datum": "2026-10-21",
+      "uhrzeit": "19:00",
+      "plattform": ["TikTok", "YouTube Shorts"],
+      "format": "Short 30 s",
+      "status": "offen"
+    }
+  ]
+}

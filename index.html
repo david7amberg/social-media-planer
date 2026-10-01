@@ -1,0 +1,1769 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Social-Media-Planer</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121418" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Planer">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface2:#eceef2; --line:#dde1e6; --text:#1b1f24; --muted:#5f6875;
+  --accent:#1f6feb; --accent-ink:#ffffff;
+  --red:#cf222e; --red-bg:#fde7e9; --amber:#b26b00; --amber-bg:#fff2d6; --green:#1a7f37;
+  --shadow:0 12px 40px rgba(15,20,30,.18); --radius:10px; --top:54px;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#121418; --surface:#1b1e23; --surface2:#262a31; --line:#343941; --text:#e7e9ec; --muted:#9aa3ae;
+  --accent:#4d94ff; --accent-ink:#0b1220;
+  --red:#ff6b6b; --red-bg:#3b1e22; --amber:#f2b33d; --amber-bg:#3a2d14; --green:#4ac26b;
+  --shadow:0 12px 40px rgba(0,0,0,.5); color-scheme:dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121418; --surface:#1b1e23; --surface2:#262a31; --line:#343941; --text:#e7e9ec; --muted:#9aa3ae;
+    --accent:#4d94ff; --accent-ink:#0b1220;
+    --red:#ff6b6b; --red-bg:#3b1e22; --amber:#f2b33d; --amber-bg:#3a2d14; --green:#4ac26b;
+    --shadow:0 12px 40px rgba(0,0,0,.5); color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:14px/1.42 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+.muted{color:var(--muted)} .small{font-size:12px}
+[hidden]{display:none!important}
+
+/* ---------- Kopfzeile */
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;padding:9px 16px;padding-top:max(9px,env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:saturate(1.5) blur(14px);backdrop-filter:saturate(1.5) blur(14px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:650;white-space:nowrap;margin-right:6px}
+.brand svg{width:22px;height:22px;flex:none}
+.tabs{display:flex;background:var(--surface2);border-radius:9px;padding:2px;gap:2px}
+.tabs button{border:0;background:transparent;padding:5px 13px;border-radius:7px;color:var(--muted);font-weight:500}
+.tabs button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.14)}
+.spacer{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:8px;font-weight:500;white-space:nowrap;line-height:1.3}
+.btn:hover{border-color:color-mix(in srgb,var(--text) 25%,var(--line))}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:var(--accent-ink)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:var(--accent-ink)}}
+.btn.danger{color:var(--red)}
+.btn.sm{padding:4px 9px;font-size:12.5px}
+.btn.block{width:100%;justify-content:center}
+.btn:disabled{opacity:.45;cursor:default}
+.iconbtn{display:inline-grid;place-items:center;width:32px;height:32px;border:0;background:transparent;border-radius:8px;color:var(--muted);flex:none}
+.iconbtn:hover{background:var(--surface2);color:var(--text)}
+.iconbtn svg{width:18px;height:18px}
+.iconbtn.sm{width:26px;height:26px}
+.iconbtn.sm svg{width:15px;height:15px}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);font-weight:500}
+.linkbtn:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- Grundlayout */
+.layout{display:grid;grid-template-columns:268px minmax(0,1fr);align-items:start}
+aside{position:sticky;top:var(--top);height:calc(100vh - var(--top));overflow:auto;border-right:1px solid var(--line);padding:16px 16px 40px;padding-left:max(16px,env(safe-area-inset-left))}
+aside section{margin-bottom:22px}
+aside h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;font-weight:650}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.sh h3{margin:0}
+main{padding:16px 22px 60px;min-width:0;padding-right:max(22px,env(safe-area-inset-right))}
+.scrim{display:none}
+
+/* ---------- Seitenleiste */
+.proj{display:flex;align-items:center;gap:6px;padding:5px 4px 5px 2px;border-radius:8px}
+.proj:hover{background:var(--surface2)}
+.pchk{display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer}
+.pchk input{width:16px;height:16px;margin:0;flex:none}
+.ptxt{display:flex;flex-direction:column;min-width:0}
+.pname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.psub{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.pk{font-size:11px;font-weight:650;color:var(--muted);background:var(--surface2);border-radius:4px;padding:1px 5px}
+.pcount{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chk{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer}
+.chk input{margin:0}
+.legend{display:grid;grid-template-columns:auto 1fr;gap:5px 9px;align-items:center;font-size:12.5px}
+.legend .si{--pc:var(--muted)}
+.lg-ring{width:22px;height:13px;border-radius:4px;background:var(--surface2)}
+.lg-ring.r{box-shadow:inset 0 0 0 1.5px var(--red)} .lg-ring.a{box-shadow:inset 0 0 0 1.5px var(--amber)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.datainfo{font-size:12px;color:var(--muted);margin:0 0 8px}
+
+/* ---------- Banner */
+.banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;border-radius:9px;margin-bottom:12px;font-size:13px}
+.banner.red{background:var(--red-bg);color:var(--text);border:1px solid color-mix(in srgb,var(--red) 40%,transparent)}
+.banner.amber{background:var(--amber-bg);border:1px solid color-mix(in srgb,var(--amber) 40%,transparent)}
+.banner .spacer{min-width:8px}
+
+/* ---------- Ansichts-Leiste */
+.vbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;min-height:34px}
+.vtitle{font-size:20px}
+.navgrp{display:flex;align-items:center;gap:2px}
+.vhint{font-size:12px;color:var(--muted);margin-left:auto}
+
+/* ---------- Status-Icons und Chips */
+.si{width:14px;height:14px;flex:none;display:block}
+.si .o{fill:none;stroke:var(--pc);stroke-width:1.5}
+.si .f{fill:var(--pc);stroke:var(--pc);stroke-width:1.5}
+.si .h{fill:var(--pc)}
+.si .ck{fill:none;stroke:var(--surface);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.st{display:inline-grid;place-items:center;border-radius:5px;cursor:pointer;flex:none}
+.st:hover{background:color-mix(in srgb,var(--pc) 22%,transparent)}
+.chip{--pc:#888;display:flex;align-items:center;gap:4px;min-width:0;margin-top:3px;padding:2px 6px 2px 4px;border-radius:5px;background:color-mix(in srgb,var(--pc) 15%,var(--surface));border-left:3px solid var(--pc);font-size:12px;line-height:1.35;cursor:pointer;-webkit-user-select:none;user-select:none}
+.chip:hover{background:color-mix(in srgb,var(--pc) 24%,var(--surface))}
+.chip .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.month .chip{align-items:flex-start}
+.month .chip .si{margin-top:2px}
+.month .chip .lbl{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.chip .time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:11.5px}
+.chip.done{opacity:.55}
+.chip.removed .lbl,.row.removed .rlbl{text-decoration:line-through}
+.w-overdue{box-shadow:inset 0 0 0 1.5px var(--red)}
+.w-warn{box-shadow:inset 0 0 0 1.5px var(--amber)}
+.chip .flag{color:var(--red);font-weight:800;font-size:11px;padding:0 1px}
+.chip.dragging{opacity:.4}
+.pb{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.02em;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 3px;line-height:1.45;background:var(--surface)}
+.badges{display:inline-flex;gap:3px;flex:none}
+
+/* ---------- Monat */
+.month{display:grid;grid-template-columns:30px repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.month .wd{background:var(--surface2);padding:6px 8px;font-size:12px;color:var(--muted);font-weight:600}
+.month .kw{background:var(--surface2);font-size:10.5px;color:var(--muted);padding:8px 0;text-align:center;font-variant-numeric:tabular-nums}
+.day{background:var(--surface);min-height:124px;padding:5px 5px 7px;min-width:0}
+.day.wkend{background:color-mix(in srgb,var(--surface) 82%,var(--surface2))}
+.day.out{background:color-mix(in srgb,var(--surface) 45%,var(--bg))}
+.day.out .dnum{color:var(--muted)}
+.dhead{display:flex;align-items:center;gap:6px;min-height:22px}
+.dnum{font-size:12.5px;font-weight:600;min-width:22px;height:22px;display:inline-grid;place-items:center;border-radius:999px;font-variant-numeric:tabular-nums}
+.day.today .dnum{background:var(--accent);color:#fff}
+.hol{flex:1;min-width:0;font-size:10.5px;color:var(--muted);font-style:italic;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.day .add{margin-left:auto;opacity:0;width:22px;height:22px}
+.day:hover .add,.wcol:hover .add{opacity:1}
+.drop-over{outline:2px dashed var(--accent);outline-offset:-3px}
+.more{display:block;border:0;background:none;padding:3px 4px 0;font-size:11.5px;color:var(--muted);font-weight:500}
+.more:hover{color:var(--text)}
+
+/* ---------- Woche */
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.wcol{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);min-height:62vh;padding:6px;min-width:0}
+.wcol.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.wcol.wkend{background:color-mix(in srgb,var(--surface) 82%,var(--surface2))}
+.whead{display:flex;align-items:center;gap:6px;padding:2px 2px 6px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.whead .wdn{font-size:12px;color:var(--muted);font-weight:600}
+.whead .dnum{font-size:15px}
+.wcol.today .dnum{background:var(--accent);color:#fff}
+.whol{font-size:10.5px;color:var(--muted);font-style:italic;padding:0 2px 4px}
+.card{flex-direction:column;align-items:stretch;gap:3px;padding:5px 6px 6px 6px;margin-top:6px}
+.card .l1{display:flex;align-items:flex-start;gap:5px}
+.card .l1 .si{margin-top:2px}
+.card .lbl{white-space:normal;overflow:visible;font-weight:500;line-height:1.3}
+.card .l2{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding-left:19px;color:var(--muted);font-size:11px}
+.wempty{font-size:12px;color:var(--muted);padding:8px 4px}
+
+/* ---------- Liste und Heute */
+.group{margin-bottom:16px}
+.ghead{display:flex;align-items:baseline;gap:8px;font-weight:650;font-size:13px;padding:6px 2px;position:sticky;top:var(--top);background:var(--bg);z-index:2}
+.ghead .muted{font-weight:500}
+.mhead{font-size:17px;margin:22px 0 6px}
+.rows{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.row{--pc:#888;display:flex;align-items:center;gap:9px;padding:8px 12px 8px 8px;border-top:1px solid var(--line);cursor:pointer;min-width:0}
+.row:first-child{border-top:0}
+.row:hover{background:color-mix(in srgb,var(--pc) 7%,var(--surface))}
+.row .st{width:24px;height:24px}
+.row .bar{width:4px;align-self:stretch;border-radius:3px;background:var(--pc);flex:none}
+.rdate{width:74px;flex:none;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rtime{width:38px;flex:none;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rlbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rmeta{display:flex;align-items:center;gap:6px;flex:none;color:var(--muted);font-size:12px}
+.rstatus{width:68px;flex:none;font-size:12px;color:var(--muted)}
+.row.done .rlbl,.row.done .rtime{opacity:.55}
+.tag{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:1px 7px;background:var(--surface2);color:var(--muted);white-space:nowrap;flex:none}
+.tag.red{background:var(--red-bg);color:var(--red)}
+.tag.amber{background:var(--amber-bg);color:var(--amber)}
+.empty-rows{padding:14px;color:var(--muted);font-size:13px}
+.listtools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.search{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;min-width:220px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:22px}
+.pcard{--pc:#888;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--pc);border-radius:var(--radius);padding:12px 14px}
+.pc-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pc-h strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-n{display:flex;gap:14px;font-size:12.5px;color:var(--muted);margin-bottom:10px;flex-wrap:wrap}
+.pc-n b{color:var(--text);font-size:15px;margin-right:2px}
+.pc-n .red b,.pc-n .red{color:var(--red)}
+.prog{height:6px;border-radius:9px;background:var(--surface2);overflow:hidden;margin-bottom:5px}
+.prog i{display:block;height:100%;background:var(--pc);border-radius:9px}
+.sect{margin-bottom:22px}
+.sect h2{font-size:15px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.sect h2 .count{font-size:12px;color:var(--muted);font-weight:500}
+.sect.red h2{color:var(--red)}
+.empty{max-width:640px;margin:40px auto;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px}
+.empty h2{font-size:21px;margin-bottom:8px}
+.empty ol{padding-left:20px;color:var(--muted);margin:18px 0 0}
+.empty li{margin:6px 0}
+
+/* ---------- Modal, Popover, Toast */
+body.modal-open{overflow:hidden}
+.modal-back{position:fixed;inset:0;z-index:60;background:rgba(10,12,16,.42);display:grid;place-items:start center;padding:6vh 16px 16px;overflow:auto}
+.modal{width:100%;max-width:520px;background:var(--surface);border-radius:14px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.modal.wide{max-width:680px}
+.mtop{display:flex;align-items:center;gap:8px;padding:14px 14px 4px 20px}
+.mtop h2{font-size:17px;flex:1}
+.mbody{padding:8px 20px 20px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;font-size:12.5px;color:var(--muted);font-weight:500;min-width:0}
+.field input,.field select,.field textarea,.imptext{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:8px;padding:7px 9px;font-size:14px;width:100%;min-width:0}
+.field textarea{resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gridnr{display:grid;grid-template-columns:84px 1fr;gap:12px}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px}
+.seg button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px;color:var(--text)}
+.seg button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,var(--surface))}
+.plats{display:flex;flex-wrap:wrap;gap:6px}
+.plats label{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--text);font-weight:400;cursor:pointer}
+.mfoot{display:flex;align-items:center;gap:8px;margin-top:8px}
+.mfoot .spacer{flex:1}
+.note{font-size:13px;border-radius:9px;padding:9px 11px;margin-bottom:12px}
+.note.amber{background:var(--amber-bg)} .note.red{background:var(--red-bg)}
+.note ul{margin:6px 0 0;padding-left:18px} .note li{margin:2px 0}
+.swatches{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.swatches button{width:26px;height:26px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+.swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--text)}
+.swatches input[type=color]{width:34px;height:28px;border:1px solid var(--line);border-radius:7px;padding:1px;background:var(--surface)}
+#pop{position:fixed;z-index:70;min-width:190px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:5px}
+#pop .mi{display:flex;align-items:center;gap:9px;width:100%;border:0;background:none;padding:7px 10px;border-radius:6px;text-align:left;color:var(--text);white-space:nowrap}
+#pop .mi:hover{background:var(--surface2)}
+#pop .mi .ok{margin-left:auto;color:var(--accent)}
+#pop .mi.danger{color:var(--red)}
+#pop hr{border:0;border-top:1px solid var(--line);margin:5px 4px}
+#pop .mlabel{font-size:11px;color:var(--muted);padding:4px 10px 2px;text-transform:uppercase;letter-spacing:.05em}
+#toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;transition:all .18s;z-index:80;background:var(--text);color:var(--bg);border-radius:10px;padding:9px 14px;display:flex;gap:14px;align-items:center;box-shadow:var(--shadow);max-width:calc(100vw - 32px);font-size:13.5px}
+#toast.show{opacity:1;transform:translateX(-50%);pointer-events:auto}
+#toast button{border:0;background:none;color:inherit;font-weight:700;text-decoration:underline;padding:0}
+.dropzone{border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;margin-bottom:12px}
+.dropzone p{margin:4px 0}
+body.file-over .dropzone{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.imptext{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.imphelp{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:13px}
+.pv{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:4px}
+.pv-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--pc);flex:none}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;cursor:pointer}
+.opt:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.opt input{margin-top:3px}
+.opt .muted{font-size:12.5px}
+.subopt{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;margin:8px 0 0 26px;color:var(--muted)}
+fieldset{border:0;padding:0;margin:12px 0 0}
+legend{padding:0;font-weight:600}
+.daylist .rows{margin-bottom:12px}
+
+/* ---------- Schmal (iPhone) */
+.only-narrow{display:none}
+@media (max-width:760px){
+  :root{--top:52px}
+  .only-narrow{display:inline-grid}
+  .hide-narrow{display:none!important}
+  .brand{display:none}
+  .topbar{gap:4px;padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right))}
+  .tabs button{padding:5px 8px}
+  .topbar .btn.primary{padding:6px 10px}
+  .layout{grid-template-columns:minmax(0,1fr)}
+  aside{position:fixed;left:0;top:0;bottom:0;height:auto;width:min(86vw,320px);z-index:50;background:var(--surface);transform:translateX(-102%);transition:transform .2s;padding-top:max(16px,env(safe-area-inset-top))}
+  body.side-open aside{transform:none;box-shadow:var(--shadow)}
+  body.side-open .scrim{display:block;position:fixed;inset:0;z-index:45;background:rgba(10,12,16,.35)}
+  main{padding:12px max(12px,env(safe-area-inset-right)) 60px max(12px,env(safe-area-inset-left))}
+  .vtitle{font-size:18px}
+  .vhint{display:none}
+  .month{grid-template-columns:repeat(7,minmax(0,1fr))}
+  .month .kw,.month .kwh{display:none}
+  .month .wd{padding:5px 4px;text-align:center}
+  .day{min-height:62px;padding:3px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .dhead{justify-content:center}
+  .hol,.day .add,.more{display:none}
+  .dchips{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;margin-top:3px}
+  .month .chip{width:8px;height:8px;padding:0;margin:0;border:0;border-radius:50%;background:var(--pc)}
+  .month .chip>*,.month .chip .lbl{display:none!important}
+  .month .chip.done{opacity:.4}
+  .day.hasol .dnum{box-shadow:inset 0 0 0 1.5px var(--red)}
+  .week{grid-template-columns:minmax(0,1fr)}
+  .wcol{min-height:0}
+  .wcol .add{opacity:1}
+  .rdate{width:auto}
+  .rstatus{display:none}
+  .row{flex-wrap:wrap;row-gap:4px;align-items:flex-start}
+  .row .bar{align-self:stretch;min-height:20px}
+  .rtime:empty{display:none}
+  .rtime{width:auto}
+  .rlbl{flex:1 1 calc(100% - 120px);white-space:normal;padding-top:2px}
+  .rmeta{margin-left:46px;flex-wrap:wrap}
+  .row .tag{margin-top:1px}
+  .grid2{grid-template-columns:1fr}
+  .modal-back{padding:max(12px,env(safe-area-inset-top)) 8px 8px}
+  .search{min-width:0;flex:1}
+  .cards{grid-template-columns:minmax(0,1fr);gap:8px;margin-bottom:16px}
+  .pcard{padding:8px 12px;border-top-width:3px}
+  .pcard .prog,.pcard .small{display:none}
+  .pc-h{margin-bottom:2px}
+  .pc-n{margin-bottom:0;gap:12px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn only-narrow" data-action="toggle-side" aria-label="Projekte und Filter">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3.5 5.5h13M3.5 10h13M3.5 14.5h13"/></svg>
+  </button>
+  <div class="brand">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 9h19M8 2.5v3M16 2.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="14.5" r="2" fill="#0FA3A3"/><circle cx="13" cy="14.5" r="2" fill="#6D5DF6"/><circle cx="18" cy="14.5" r="2" fill="#D9468F"/></svg>
+    <span>Social-Media-Planer</span>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Ansicht">
+    <button data-view="heute">Heute</button><button data-view="monat">Monat</button><button data-view="woche">Woche</button><button data-view="liste">Liste</button>
+  </nav>
+  <div class="spacer"></div>
+  <button class="btn primary" data-action="new" title="Neuer Eintrag (N)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg><span class="hide-narrow">Eintrag</span></button>
+  <button class="btn hide-narrow" data-action="import">Importieren</button>
+  <button class="iconbtn" data-action="menu" aria-label="Menü">
+    <svg viewBox="0 0 20 20" fill="currentColor"><circle cx="4.5" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="15.5" cy="10" r="1.6"/></svg>
+  </button>
+</header>
+<div class="layout">
+  <aside id="side" aria-label="Projekte und Filter"></aside>
+  <main id="main">
+    <div id="banners"></div>
+    <div id="vbar" class="vbar"></div>
+    <div id="view"></div>
+  </main>
+</div>
+<div class="scrim" data-action="toggle-side"></div>
+<div id="pop" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="filepick" multiple hidden>
+
+<script type="application/json" id="vorlage-beispiel">
+{
+  "format": "social-media-plan",
+  "version": 1,
+  "projekt": {
+    "id": "muster-cafe",
+    "name": "Musterprojekt Café",
+    "kuerzel": "MC",
+    "farbe": "#D9468F"
+  },
+  "exportiert_am": "2026-10-01",
+  "eintraege": [
+    {
+      "id": "mc-01",
+      "typ": "post",
+      "nr": "01",
+      "titel": "Herbstkarte: die drei neuen Kuchen",
+      "datum": "2026-10-07",
+      "uhrzeit": "18:00",
+      "plattform": [
+        "Instagram",
+        "TikTok"
+      ],
+      "format": "Reel 15 s",
+      "status": "fertig"
+    },
+    {
+      "id": "mc-02",
+      "typ": "post",
+      "nr": "02",
+      "titel": "Hinter der Theke: so entsteht der Zimtknoten",
+      "datum": "2026-10-10",
+      "plattform": [
+        "Instagram"
+      ],
+      "format": "Karussell 6 Slides",
+      "status": "in_arbeit"
+    },
+    {
+      "id": "mc-z1",
+      "typ": "todo",
+      "nr": "Z1",
+      "titel": "Fotos der Herbstkuchen liefern",
+      "datum": "2026-10-12",
+      "status": "offen",
+      "notiz": "Tageslicht, von oben und schräg"
+    },
+    {
+      "id": "mc-03",
+      "typ": "post",
+      "nr": "03",
+      "titel": "Frage der Woche: Hafer- oder Kuhmilch?",
+      "datum": "2026-10-14",
+      "uhrzeit": "12:30",
+      "plattform": [
+        "Instagram",
+        "TikTok",
+        "YouTube Shorts"
+      ],
+      "format": "Short 20 s",
+      "status": "offen"
+    },
+    {
+      "id": "mc-z2",
+      "typ": "todo",
+      "nr": "Z2",
+      "titel": "Texte für Beitrag 04 freigeben",
+      "datum": "2026-10-15",
+      "status": "offen"
+    },
+    {
+      "id": "mc-04",
+      "typ": "post",
+      "nr": "04",
+      "titel": "Wochenend-Öffnungszeiten im Herbst",
+      "datum": "2026-10-17",
+      "plattform": [
+        "Instagram"
+      ],
+      "format": "Story",
+      "status": "offen",
+      "notiz": "Mit Umfrage-Sticker"
+    },
+    {
+      "id": "mc-05",
+      "typ": "post",
+      "nr": "05",
+      "titel": "Ein Tag im Café in 30 Sekunden",
+      "datum": "2026-10-21",
+      "uhrzeit": "19:00",
+      "plattform": [
+        "TikTok",
+        "YouTube Shorts"
+      ],
+      "format": "Short 30 s",
+      "status": "offen"
+    }
+  ]
+}
+</script>
+<script type="text/plain" id="vorlage-prompt">
+Exportiere den Social-Media-Plan aus diesem Chat als Importdatei für meinen Social-Media-Planer (eine Kalender-App).
+
+AUSGABE
+- Eine Datei namens <projekt-id>.plan.json zum Herunterladen.
+- Wenn du keine Datei erzeugen kannst: genau ein JSON-Codeblock, ohne Text davor oder danach.
+
+OBERSTE EBENE
+- "format": immer "social-media-plan"
+- "version": immer 1
+- "projekt": Angaben zum Projekt (siehe PROJEKT)
+- "exportiert_am": heutiges Datum als "JJJJ-MM-TT"
+- "eintraege": Liste mit einem Eintrag pro Beitrag und pro To-do (siehe EINTRAG)
+
+PROJEKT
+- "id": feste Kennung, nur Kleinbuchstaben, Ziffern und Bindestriche, z. B. "baeckerei-mueller". Bei jedem späteren Export exakt gleich, sonst legt die App ein zweites Projekt an.
+- "name": Anzeigename des Projekts.
+- "kuerzel": 2 bis 3 Großbuchstaben. Steht im Kalender vor jeder Nummer, z. B. "BM".
+- "farbe" (optional): Farbvorschlag als "#RRGGBB".
+
+EINTRAG
+- "id" (Pflicht): eindeutig im Projekt und dauerhaft, z. B. "bm-01" oder "bm-z1". Ein Eintrag behält seine id für immer, auch wenn sich Datum oder Titel ändern. Neue Einträge bekommen neue ids, alte ids nie wiederverwenden.
+- "typ" (Pflicht): "post" für eine Veröffentlichung, "todo" für eine Aufgabe mit Fälligkeitsdatum (z. B. Fotos liefern, Freigabe geben).
+- "nr" (Pflicht): Kennnummer im Kalender. Posts zweistellig "01", "02" …, To-dos "Z1", "Z2" …
+- "titel" (Pflicht): kurz, höchstens etwa 60 Zeichen.
+- "datum" (Pflicht): "JJJJ-MM-TT". Bei Posts der Veröffentlichungstag, bei To-dos der Tag, bis zu dem es erledigt sein muss. Wochentage prüfen.
+- "uhrzeit" (optional): "HH:MM" im 24-Stunden-Format, nur bei fest geplanter Uhrzeit. Sonst weglassen.
+- "plattform" (bei Posts Pflicht, bei To-dos weglassen): Liste aus "Instagram", "TikTok", "YouTube Shorts" (außerdem möglich: "Facebook", "LinkedIn"). Läuft derselbe Beitrag auf mehreren Plattformen: ein Eintrag mit mehreren Plattformen.
+- "format" (optional): z. B. "Reel 20 s", "Karussell 7 Slides", "Story", "Short 30 s".
+- "status" (optional, Standard "offen"): bei Posts "offen", "in_arbeit", "fertig" oder "gepostet"; bei To-dos "offen", "in_arbeit" oder "erledigt".
+- "notiz" (optional): höchstens ein kurzer Satz.
+- "link" (optional): Link zum veröffentlichten Beitrag.
+
+REGELN
+- Gültiges JSON: doppelte Anführungszeichen, keine Kommentare, kein Komma nach dem letzten Element einer Liste.
+- Keine weiteren Felder. Captions, Hashtags und Skripte gehören nicht in diese Datei.
+- Alle Einträge des Plans exportieren, auch bereits gepostete und erledigte, jeweils mit aktuellem Status.
+
+BEISPIEL (ein erfundenes Projekt, nur zur Orientierung)
+{
+  "format": "social-media-plan",
+  "version": 1,
+  "projekt": {
+    "id": "muster-cafe",
+    "name": "Musterprojekt Café",
+    "kuerzel": "MC",
+    "farbe": "#D9468F"
+  },
+  "exportiert_am": "2026-10-01",
+  "eintraege": [
+    {
+      "id": "mc-01",
+      "typ": "post",
+      "nr": "01",
+      "titel": "Herbstkarte: die drei neuen Kuchen",
+      "datum": "2026-10-07",
+      "uhrzeit": "18:00",
+      "plattform": [
+        "Instagram",
+        "TikTok"
+      ],
+      "format": "Reel 15 s",
+      "status": "fertig"
+    },
+    {
+      "id": "mc-02",
+      "typ": "post",
+      "nr": "02",
+      "titel": "Hinter der Theke: so entsteht der Zimtknoten",
+      "datum": "2026-10-10",
+      "plattform": [
+        "Instagram"
+      ],
+      "format": "Karussell 6 Slides",
+      "status": "in_arbeit"
+    },
+    {
+      "id": "mc-z1",
+      "typ": "todo",
+      "nr": "Z1",
+      "titel": "Fotos der Herbstkuchen liefern",
+      "datum": "2026-10-12",
+      "status": "offen",
+      "notiz": "Tageslicht, von oben und schräg"
+    },
+    {
+      "id": "mc-03",
+      "typ": "post",
+      "nr": "03",
+      "titel": "Frage der Woche: Hafer- oder Kuhmilch?",
+      "datum": "2026-10-14",
+      "uhrzeit": "12:30",
+      "plattform": [
+        "Instagram",
+        "TikTok",
+        "YouTube Shorts"
+      ],
+      "format": "Short 20 s",
+      "status": "offen"
+    },
+    {
+      "id": "mc-z2",
+      "typ": "todo",
+      "nr": "Z2",
+      "titel": "Texte für Beitrag 04 freigeben",
+      "datum": "2026-10-15",
+      "status": "offen"
+    },
+    {
+      "id": "mc-04",
+      "typ": "post",
+      "nr": "04",
+      "titel": "Wochenend-Öffnungszeiten im Herbst",
+      "datum": "2026-10-17",
+      "plattform": [
+        "Instagram"
+      ],
+      "format": "Story",
+      "status": "offen",
+      "notiz": "Mit Umfrage-Sticker"
+    },
+    {
+      "id": "mc-05",
+      "typ": "post",
+      "nr": "05",
+      "titel": "Ein Tag im Café in 30 Sekunden",
+      "datum": "2026-10-21",
+      "uhrzeit": "19:00",
+      "plattform": [
+        "TikTok",
+        "YouTube Shorts"
+      ],
+      "format": "Short 30 s",
+      "status": "offen"
+    }
+  ]
+}
+</script>
+
+<script>
+(() => {
+'use strict';
+
+// ================================================================ Konstanten
+const STORE_KEY = 'social-media-planer.v1';
+const PLATFORMS = ['Instagram', 'TikTok', 'YouTube Shorts', 'Facebook', 'LinkedIn'];
+const PLAT_ABBR = { 'Instagram': 'IG', 'TikTok': 'TT', 'YouTube Shorts': 'YT', 'Facebook': 'FB', 'LinkedIn': 'LI', 'Pinterest': 'PI' };
+const PALETTE = ['#0FA3A3', '#6D5DF6', '#2F7FE0', '#D9468F', '#3E9B4F', '#E07B39', '#8A6D5A', '#5B6B7A'];
+const STATUS = {
+  post: [['offen', 'offen'], ['in_arbeit', 'in Arbeit'], ['fertig', 'fertig'], ['gepostet', 'gepostet']],
+  todo: [['offen', 'offen'], ['in_arbeit', 'in Arbeit'], ['erledigt', 'erledigt']],
+};
+const RANK = { offen: 0, in_arbeit: 1, fertig: 2, gepostet: 3, erledigt: 3 };
+const SYNC_FIELDS = ['typ', 'nr', 'titel', 'datum', 'uhrzeit', 'plattform', 'format', 'notiz', 'link'];
+const WD = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const WD_LONG = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const MAX_CHIPS = 4;
+const BACKUP_DAYS = 7;
+
+// ================================================================ Hilfen
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clone = o => (o === undefined ? undefined : JSON.parse(JSON.stringify(o)));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const str = v => (v === undefined || v === null ? '' : String(v).trim());
+const same = (a, b) => JSON.stringify(a ?? '') === JSON.stringify(b ?? '');
+const rid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+const DONE = s => s === 'gepostet' || s === 'erledigt';
+const isNarrow = () => matchMedia('(max-width: 760px)').matches;
+const pad = n => String(n).padStart(2, '0');
+const uidOf = (pid, id) => `${pid}::${id}`;
+
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseISO = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12); };
+const addDays = (s, n) => { const d = parseISO(s); d.setDate(d.getDate() + n); return iso(d); };
+const addMonths = (s, n) => { const d = parseISO(s); d.setDate(1); d.setMonth(d.getMonth() + n); return iso(d); };
+const todayISO = () => iso(new Date());
+const wdIdx = s => (parseISO(s).getDay() + 6) % 7;
+const mondayOf = s => addDays(s, -wdIdx(s));
+const daysBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 86400000);
+const isoWeek = s => {
+  const d = parseISO(s);
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t - y0) / 86400000 + 1) / 7);
+};
+const fmtShort = s => { const d = parseISO(s); return `${WD[wdIdx(s)]} ${pad(d.getDate())}.${pad(d.getMonth() + 1)}.`; };
+const fmtDate = s => { const d = parseISO(s); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`; };
+const fmtLong = s => { const d = parseISO(s); return `${WD_LONG[wdIdx(s)]}, ${d.getDate()}. ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; };
+const fmtStamp = t => { if (!t) return 'nie'; const d = new Date(t); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const relDay = s => { const n = daysBetween(TODAY, s); return n === 0 ? 'heute' : n === 1 ? 'morgen' : n === -1 ? 'gestern' : n === 2 ? 'übermorgen' : ''; };
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+function slugify(s) {
+  return str(s).toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function abbr(name) {
+  const w = str(name).split(/[\s\-_.]+/).filter(Boolean);
+  const a = (w.length > 1 ? w.slice(0, 3).map(x => x[0]).join('') : str(name).slice(0, 2));
+  return a.toUpperCase() || 'P';
+}
+function hexToRgb(h) { const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if (!m) return null; const n = parseInt(m[1], 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+function colorDist(a, b) { const x = hexToRgb(a), y = hexToRgb(b); if (!x || !y) return 999; return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]); }
+
+// ================================================================ Feiertage (Bayern)
+const holCache = {};
+function holidays(year) {
+  if (holCache[year]) return holCache[year];
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100, d = Math.floor(b / 4), e = b % 4;
+  const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mon = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+  const easter = `${year}-${pad(mon)}-${pad(day)}`;
+  const map = {};
+  [[`${year}-01-01`, 'Neujahr'], [`${year}-01-06`, 'Heilige Drei Könige'], [addDays(easter, -2), 'Karfreitag'],
+   [addDays(easter, 1), 'Ostermontag'], [`${year}-05-01`, 'Tag der Arbeit'], [addDays(easter, 39), 'Christi Himmelfahrt'],
+   [addDays(easter, 50), 'Pfingstmontag'], [addDays(easter, 60), 'Fronleichnam'], [`${year}-08-15`, 'Mariä Himmelfahrt'],
+   [`${year}-10-03`, 'Tag der Deutschen Einheit'], [`${year}-11-01`, 'Allerheiligen'],
+   [`${year}-12-25`, '1. Weihnachtstag'], [`${year}-12-26`, '2. Weihnachtstag']].forEach(([s, n]) => { map[s] = n; });
+  return (holCache[year] = map);
+}
+const holidayName = s => holidays(+s.slice(0, 4))[s] || '';
+
+// ================================================================ Zustand und Speicher
+let storageOK = true;
+let TODAY = todayISO();
+const ui = { view: null, cursor: TODAY, search: '', showPast: false, backupLater: false };
+const undoStack = [];
+
+function emptyState() {
+  return { version: 1, projects: [], entries: [], settings: { theme: 'auto', view: '', lastBackup: null, lastChange: null, restoredFrom: null, hideDone: false, showPost: true, showTodo: true } };
+}
+function migrate(s) {
+  const e = emptyState();
+  if (!s || typeof s !== 'object') return e;
+  s.version = 1;
+  s.projects = Array.isArray(s.projects) ? s.projects : [];
+  s.entries = Array.isArray(s.entries) ? s.entries : [];
+  s.settings = Object.assign(e.settings, s.settings || {});
+  s.projects = s.projects.filter(p => p && p.id).map(p => Object.assign(p, { id: String(p.id), name: str(p.name) || String(p.id), kuerzel: str(p.kuerzel), farbe: hexToRgb(p.farbe) ? p.farbe : '#5B6B7A' }));
+  s.entries = s.entries.filter(x => x && x.projekt && x.id != null && /^\d{4}-\d{2}-\d{2}$/.test(x.datum || ''));
+  s.entries.forEach(x => {
+    x.projekt = String(x.projekt); x.id = String(x.id);
+    if (x.typ !== 'todo') x.typ = 'post';
+    if (!STATUS[x.typ].some(([k]) => k === x.status)) x.status = 'offen';
+    if (!/^\d{2}:\d{2}$/.test(x.uhrzeit || '')) x.uhrzeit = '';
+    for (const f of ['nr', 'titel', 'format', 'notiz', 'link']) x[f] = str(x[f]);
+    x.plattform = (Array.isArray(x.plattform) ? x.plattform : (x.plattform ? [x.plattform] : [])).map(str).filter(Boolean);
+    x.uid = uidOf(x.projekt, x.id);
+  });
+  return s;
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    localStorage.setItem('__smp_test', '1');
+    localStorage.removeItem('__smp_test');
+    if (raw) return migrate(JSON.parse(raw));
+  } catch (err) {
+    storageOK = false;
+  }
+  return emptyState();
+}
+function persist() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch (err) { storageOK = false; renderBanners(); }
+}
+function touch() { state.settings.lastChange = new Date().toISOString(); persist(); }
+let state = loadState();
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (err) {}
+
+function mutate(msg, fn) {
+  undoStack.push(JSON.stringify({ projects: state.projects, entries: state.entries }));
+  if (undoStack.length > 40) undoStack.shift();
+  fn();
+  touch();
+  render();
+  if (msg) toast(msg, true);
+}
+function undo() {
+  const s = undoStack.pop();
+  if (!s) { toast('Nichts zum Rückgängigmachen'); return; }
+  const o = JSON.parse(s);
+  state.projects = o.projects; state.entries = o.entries;
+  touch(); render(); toast('Rückgängig gemacht');
+}
+
+// ================================================================ Einträge
+const projById = id => state.projects.find(p => p.id === id);
+const entryByUid = uid => state.entries.find(e => e.uid === uid);
+const projColor = e => (projById(e.projekt) || {}).farbe || '#888888';
+
+function entryLabel(e) {
+  const p = projById(e.projekt);
+  const head = [p ? p.kuerzel : '', e.nr].filter(Boolean).join(' ');
+  return head ? `${head} · ${e.titel}` : e.titel;
+}
+function statusLabel(typ, s) { const f = STATUS[typ].find(x => x[0] === s); return f ? f[1] : s; }
+function warnLevel(e) {
+  if (DONE(e.status)) return '';
+  const d = daysBetween(TODAY, e.datum);
+  if (d < 0) return 'overdue';
+  if (d <= 2 && !(e.typ === 'post' && e.status === 'fertig')) return 'warn';
+  return '';
+}
+function warnText(e, w) {
+  if (w === 'overdue') return e.typ === 'post' ? 'überfällig' : 'überfällig';
+  if (w === 'warn') return e.typ === 'post' ? 'noch nicht fertig' : (e.datum === TODAY ? 'heute fällig' : 'bald fällig');
+  return '';
+}
+function cmpEntries(a, b) {
+  return a.datum.localeCompare(b.datum)
+    || (a.uhrzeit || '').localeCompare(b.uhrzeit || '')
+    || (a.typ === b.typ ? 0 : a.typ === 'todo' ? -1 : 1)
+    || ((projById(a.projekt) || {}).name || '').localeCompare((projById(b.projekt) || {}).name || '')
+    || String(a.nr).localeCompare(String(b.nr), 'de', { numeric: true });
+}
+function visibleEntries() {
+  const hidden = new Set(state.projects.filter(p => p.sichtbar === false).map(p => p.id));
+  const st = state.settings;
+  return state.entries.filter(e => !hidden.has(e.projekt)
+    && (e.typ === 'todo' ? st.showTodo : st.showPost)
+    && !(st.hideDone && DONE(e.status)));
+}
+function byDate(list) {
+  const m = {};
+  for (const e of list) (m[e.datum] = m[e.datum] || []).push(e);
+  for (const k in m) m[k].sort(cmpEntries);
+  return m;
+}
+function nextNr(pid, typ) {
+  const es = state.entries.filter(e => e.projekt === pid && e.typ === typ);
+  if (typ === 'todo') {
+    const n = Math.max(0, ...es.map(e => +(/^Z(\d+)$/i.exec(e.nr || '') || [0, 0])[1]));
+    return `Z${n + 1}`;
+  }
+  const n = Math.max(0, ...es.map(e => (/^\d+$/.test(e.nr || '') ? +e.nr : 0)));
+  return pad(n + 1);
+}
+function defaultPlatforms(pid) {
+  const cnt = {};
+  state.entries.filter(e => e.projekt === pid && e.typ === 'post').forEach(e => e.plattform.forEach(p => { cnt[p] = (cnt[p] || 0) + 1; }));
+  const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
+  return top.length ? [top[0][0]] : [];
+}
+function pickColor(suggest) {
+  const used = state.projects.map(p => p.farbe);
+  const free = c => used.every(u => colorDist(u, c) > 80);
+  if (hexToRgb(suggest) && free(suggest)) return suggest.toUpperCase();
+  return PALETTE.find(free) || PALETTE[state.projects.length % PALETTE.length];
+}
+function uniqueProjId(base) { let id = base || 'projekt', n = 2; while (projById(id)) id = `${base}-${n++}`; return id; }
+
+// ================================================================ Icons
+function statusSVG(typ, s) {
+  const sq = typ === 'todo';
+  const shape = cls => sq ? `<rect class="${cls}" x="1.75" y="1.75" width="10.5" height="10.5" rx="2.6"/>` : `<circle class="${cls}" cx="7" cy="7" r="5.25"/>`;
+  const half = sq ? '<path class="h" d="M7 1.75h2.65a2.6 2.6 0 0 1 2.6 2.6v5.3a2.6 2.6 0 0 1-2.6 2.6H7z"/>' : '<path class="h" d="M7 1.75a5.25 5.25 0 0 1 0 10.5z"/>';
+  const check = '<path class="ck" d="M4.4 7.2l1.75 1.75L9.7 5.3"/>';
+  let inner;
+  if (s === 'offen') inner = shape('o');
+  else if (s === 'in_arbeit') inner = shape('o') + half;
+  else if (s === 'fertig') inner = shape('f');
+  else inner = shape('f') + check;
+  return `<svg class="si" viewBox="0 0 14 14" aria-hidden="true">${inner}</svg>`;
+}
+const ICON = {
+  x: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>',
+  plus: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 4.5v11M4.5 10h11"/></svg>',
+  dots: '<svg viewBox="0 0 20 20" fill="currentColor"><circle cx="4.5" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="15.5" cy="10" r="1.5"/></svg>',
+  left: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5L7 10l5.5 5.5"/></svg>',
+  right: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4.5L13 10l-5.5 5.5"/></svg>',
+};
+const badges = e => (e.typ === 'post' && e.plattform.length
+  ? `<span class="badges">${e.plattform.map(p => `<span class="pb" title="${esc(p)}">${esc(PLAT_ABBR[p] || p.slice(0, 2).toUpperCase())}</span>`).join('')}</span>` : '');
+function tooltip(e) {
+  const p = projById(e.projekt);
+  return [entryLabel(e), `${fmtLong(e.datum)}${e.uhrzeit ? ', ' + e.uhrzeit + ' Uhr' : ''}`,
+    [e.typ === 'todo' ? 'To-do' : e.plattform.join(', '), e.format].filter(Boolean).join(' · '),
+    `Status: ${statusLabel(e.typ, e.status)}${warnLevel(e) ? ' (' + warnText(e, warnLevel(e)) + ')' : ''}`,
+    p ? `Projekt: ${p.name}` : '', e.notiz ? `Notiz: ${e.notiz}` : '', e.entfernt ? 'Nicht mehr im importierten Plan' : ''].filter(Boolean).join('\n');
+}
+const stBtn = e => `<span class="st" data-action="status" role="button" tabindex="0" aria-label="Status: ${esc(statusLabel(e.typ, e.status))}, ändern" title="Status: ${esc(statusLabel(e.typ, e.status))} (klicken zum Ändern)">${statusSVG(e.typ, e.status)}</span>`;
+
+function chipHTML(e) {
+  const w = warnLevel(e);
+  return `<div class="chip ${w ? 'w-' + w : ''} ${DONE(e.status) ? 'done' : ''} ${e.entfernt ? 'removed' : ''}" style="--pc:${projColor(e)}" draggable="true" data-uid="${esc(e.uid)}" title="${esc(tooltip(e))}">`
+    + `${stBtn(e)}${e.uhrzeit ? `<span class="time">${esc(e.uhrzeit)}</span>` : ''}<span class="lbl">${esc(entryLabel(e))}</span>${w === 'overdue' ? '<span class="flag">!</span>' : ''}</div>`;
+}
+function cardHTML(e) {
+  const w = warnLevel(e);
+  const meta = [badges(e), e.typ === 'todo' ? '<span>To-do</span>' : '', e.format ? `<span>${esc(e.format)}</span>` : '', w ? `<span class="tag ${w === 'overdue' ? 'red' : 'amber'}">${warnText(e, w)}</span>` : ''].filter(Boolean).join('');
+  return `<div class="chip card ${w ? 'w-' + w : ''} ${DONE(e.status) ? 'done' : ''} ${e.entfernt ? 'removed' : ''}" style="--pc:${projColor(e)}" draggable="true" data-uid="${esc(e.uid)}" title="${esc(tooltip(e))}">`
+    + `<div class="l1">${stBtn(e)}<span class="lbl">${e.uhrzeit ? `<span class="time">${esc(e.uhrzeit)}</span> ` : ''}${esc(entryLabel(e))}</span></div>${meta ? `<div class="l2">${meta}</div>` : ''}</div>`;
+}
+function rowHTML(e, showDate) {
+  const w = warnLevel(e);
+  return `<div class="row ${DONE(e.status) ? 'done' : ''} ${e.entfernt ? 'removed' : ''}" style="--pc:${projColor(e)}" data-uid="${esc(e.uid)}" tabindex="0" title="${esc(tooltip(e))}">`
+    + `${stBtn(e)}<span class="bar"></span>${showDate ? `<span class="rdate">${fmtShort(e.datum)}</span>` : ''}<span class="rtime">${esc(e.uhrzeit)}</span>`
+    + `<span class="rlbl">${esc(entryLabel(e))}</span>`
+    + `<span class="rmeta">${e.typ === 'todo' ? '<span class="tag">To-do</span>' : badges(e)}${e.format ? `<span class="fmt">${esc(e.format)}</span>` : ''}</span>`
+    + `${w ? `<span class="tag ${w === 'overdue' ? 'red' : 'amber'}">${warnText(e, w)}</span>` : ''}${e.entfernt ? '<span class="tag">nicht mehr im Plan</span>' : ''}`
+    + `<span class="rstatus">${esc(statusLabel(e.typ, e.status))}</span></div>`;
+}
+const rowsHTML = (list, showDate, emptyMsg) => `<div class="rows">${list.length ? list.map(e => rowHTML(e, showDate)).join('') : `<div class="empty-rows">${emptyMsg}</div>`}</div>`;
+
+// ================================================================ Rendern
+const side = $('#side'), view = $('#view'), vbar = $('#vbar'), banners = $('#banners');
+
+function render() {
+  applyTheme();
+  if (!ui.view) ui.view = state.settings.view || (isNarrow() ? 'heute' : 'monat');
+  $$('#tabs [data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === ui.view)));
+  renderSide();
+  renderBanners();
+  if (!state.projects.length) { vbar.innerHTML = ''; view.innerHTML = emptyHTML(); return; }
+  ({ heute: renderToday, monat: renderMonth, woche: renderWeek, liste: renderList })[ui.view]();
+}
+function applyTheme() {
+  const t = state.settings.theme;
+  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  else delete document.documentElement.dataset.theme;
+}
+function emptyHTML() {
+  return `<div class="empty"><h2>Willkommen im Social-Media-Planer</h2>
+  <p class="muted">Hier landen die Pläne aus deinen Chats: ein Kalender für alle Projekte, farbig getrennt, mit Status zum Abhaken.</p>
+  <div class="btnrow" style="margin-top:16px"><button class="btn primary" data-action="import">Plan importieren</button><button class="btn" data-action="example-load">Beispiel ansehen</button><button class="btn" data-action="copy-prompt">Prompt für Chats kopieren</button></div>
+  <ol><li>Im Chat des Projekts den Export-Prompt einfügen. Der Chat liefert eine <code>.plan.json</code>-Datei.</li><li>Die Datei hier importieren: hineinziehen, auswählen oder den Text aus dem Chat einfügen.</li><li>Im Kalender abhaken: offen → in Arbeit → fertig → gepostet.</li></ol></div>`;
+}
+
+function renderSide() {
+  const ps = state.projects;
+  const st = state.settings;
+  const projHTML = ps.length ? ps.map(p => {
+    const es = state.entries.filter(e => e.projekt === p.id && !e.entfernt);
+    const done = es.filter(e => DONE(e.status)).length;
+    return `<div class="proj"><label class="pchk" title="Ein- oder ausblenden"><input type="checkbox" data-proj-toggle="${esc(p.id)}" style="accent-color:${p.farbe}" ${p.sichtbar !== false ? 'checked' : ''}><span class="ptxt"><span class="pname" title="${esc(p.name)}">${esc(p.name)}</span><span class="psub"><span class="pk">${esc(p.kuerzel)}</span><span class="pcount">${done} von ${es.length} erledigt</span></span></span></label>`
+      + ``
+      + `<button class="iconbtn sm" data-action="proj-edit" data-pid="${esc(p.id)}" aria-label="${esc(p.name)} bearbeiten" title="Farbe, Name, Export">${ICON.dots}</button></div>`;
+  }).join('') : '<p class="small muted">Noch keine Projekte.</p>';
+  side.innerHTML = `
+  <section><div class="sh"><h3>Projekte</h3><button class="iconbtn sm" data-action="proj-new" aria-label="Projekt anlegen" title="Projekt von Hand anlegen">${ICON.plus}</button></div>
+    ${projHTML}
+    <div style="margin-top:10px"><button class="btn block" data-action="import">Plan importieren</button></div></section>
+  <section><h3>Anzeigen</h3>
+    <label class="chk"><input type="checkbox" data-filter="showPost" ${st.showPost ? 'checked' : ''}> Posts</label>
+    <label class="chk"><input type="checkbox" data-filter="showTodo" ${st.showTodo ? 'checked' : ''}> To-dos</label>
+    <label class="chk"><input type="checkbox" data-filter="hideDone" ${st.hideDone ? 'checked' : ''}> Gepostetes und Erledigtes ausblenden</label></section>
+  <section><h3>Legende</h3><div class="legend">
+    ${statusSVG('post', 'offen')}<span>Post offen</span>${statusSVG('post', 'in_arbeit')}<span>in Arbeit</span>${statusSVG('post', 'fertig')}<span>fertig (bereit zum Posten)</span>${statusSVG('post', 'gepostet')}<span>gepostet</span>
+    ${statusSVG('todo', 'offen')}<span>To-do offen</span>${statusSVG('todo', 'erledigt')}<span>To-do erledigt</span>
+    <span class="lg-ring r"></span><span>überfällig</span><span class="lg-ring a"></span><span>in 2 Tagen, noch nicht fertig</span></div></section>
+  <section><h3>Daten</h3>
+    <p class="datainfo">Gespeichert in diesem Browser auf diesem Gerät.<br>Letzte Änderung: ${fmtStamp(st.lastChange)}<br>Letztes Backup: ${fmtStamp(st.lastBackup)}${st.restoredFrom ? `<br>Geladen aus Backup vom ${fmtStamp(st.restoredFrom)}` : ''}</p>
+    <div class="btnrow"><button class="btn sm" data-action="backup-save">Backup sichern</button><button class="btn sm" data-action="backup-load">Backup laden</button></div></section>`;
+}
+
+function renderBanners() {
+  const out = [];
+  if (!storageOK) out.push(`<div class="banner red"><strong>Speichern im Browser klappt hier nicht.</strong><span>Änderungen gehen beim Schließen verloren. Bitte über die Online-Adresse öffnen oder vor dem Schließen „Backup sichern“.</span><span class="spacer"></span><button class="btn sm" data-action="backup-save">Backup sichern</button></div>`);
+  const st = state.settings;
+  if (storageOK && !ui.backupLater && state.entries.length && st.lastChange && (!st.lastBackup || st.lastChange > st.lastBackup)) {
+    const since = st.lastBackup || st.firstData || st.lastChange;
+    const days = Math.floor((Date.now() - new Date(since).getTime()) / 86400000);
+    if (!st.firstData) { st.firstData = st.lastChange; persist(); }
+    if (days >= BACKUP_DAYS) out.push(`<div class="banner amber"><span>${st.lastBackup ? `Letztes Backup vor ${days} Tagen.` : 'Noch kein Backup gesichert.'} Ein Backup schützt deine Häkchen, falls Browserdaten gelöscht werden, und bringt den Stand aufs iPhone.</span><span class="spacer"></span><button class="btn sm" data-action="backup-save">Backup sichern</button><button class="btn sm" data-action="backup-later">Später</button></div>`);
+  }
+  banners.innerHTML = out.join('');
+}
+
+function navBar(title, hint) {
+  return `<div class="navgrp"><button class="iconbtn" data-action="prev" aria-label="Zurück" title="Zurück (←)">${ICON.left}</button><button class="btn sm" data-action="today" title="Heute (T)">Heute</button><button class="iconbtn" data-action="next" aria-label="Weiter" title="Weiter (→)">${ICON.right}</button></div><h1 class="vtitle">${title}</h1>${hint ? `<span class="vhint">${hint}</span>` : ''}`;
+}
+
+function renderMonth() {
+  const c = parseISO(ui.cursor);
+  const y = c.getFullYear(), m = c.getMonth();
+  const first = `${y}-${pad(m + 1)}-01`;
+  const last = `${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`;
+  const start = mondayOf(first);
+  const weeks = Math.ceil((daysBetween(start, last) + 1) / 7);
+  vbar.innerHTML = navBar(`${MONTHS[m]} ${y}`, 'Doppelklick auf einen Tag: neuer Eintrag · Einträge per Drag & Drop verschieben');
+  const map = byDate(visibleEntries());
+  let h = '<div class="month"><div class="wd kwh"></div>' + WD.map(d => `<div class="wd">${d}</div>`).join('');
+  for (let w = 0; w < weeks; w++) {
+    const ws = addDays(start, w * 7);
+    h += `<div class="kw" title="Kalenderwoche">${isoWeek(ws)}</div>`;
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(ws, i);
+      const list = map[d] || [];
+      const hol = holidayName(d);
+      const cls = ['day', d.slice(0, 7) !== first.slice(0, 7) ? 'out' : '', d === TODAY ? 'today' : '', i >= 5 ? 'wkend' : '', list.some(e => warnLevel(e) === 'overdue') ? 'hasol' : ''].join(' ');
+      const shown = isNarrow() ? list : list.slice(0, MAX_CHIPS);
+      h += `<div class="${cls}" data-date="${d}" data-drop="${d}"><div class="dhead"><span class="dnum">${+d.slice(8)}</span>${hol ? `<span class="hol" title="${esc(hol)} (Feiertag in Bayern)">${esc(hol)}</span>` : ''}<button class="iconbtn sm add" data-action="new" data-date="${d}" aria-label="Neuer Eintrag am ${fmtShort(d)}">${ICON.plus}</button></div>`
+        + `<div class="dchips">${shown.map(chipHTML).join('')}</div>${list.length > shown.length ? `<button class="more" data-action="day" data-date="${d}">+${list.length - shown.length} weitere</button>` : ''}</div>`;
+    }
+  }
+  view.innerHTML = h + '</div>';
+}
+
+function renderWeek() {
+  const start = mondayOf(ui.cursor), end = addDays(start, 6);
+  vbar.innerHTML = navBar(`KW ${isoWeek(start)} <span class="muted" style="font-weight:500">· ${fmtDate(start).slice(0, 6)} – ${fmtDate(end)}</span>`, 'Einträge per Drag & Drop auf einen anderen Tag ziehen');
+  const map = byDate(visibleEntries());
+  let h = '<div class="week">';
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(start, i);
+    const list = map[d] || [];
+    const hol = holidayName(d);
+    h += `<div class="wcol ${d === TODAY ? 'today' : ''} ${i >= 5 ? 'wkend' : ''}" data-drop="${d}" data-date="${d}"><div class="whead"><span class="wdn">${WD[i]}</span><span class="dnum">${+d.slice(8)}.</span><span class="muted small">${relDay(d)}</span><button class="iconbtn sm add" style="margin-left:auto" data-action="new" data-date="${d}" aria-label="Neuer Eintrag am ${fmtShort(d)}">${ICON.plus}</button></div>`
+      + `${hol ? `<div class="whol">${esc(hol)}</div>` : ''}${list.length ? list.map(cardHTML).join('') : '<div class="wempty">–</div>'}</div>`;
+  }
+  view.innerHTML = h + '</div>';
+}
+
+function renderList() {
+  if (!$('#listSearch')) {
+    vbar.innerHTML = `<h1 class="vtitle">Liste</h1><div class="listtools"><input id="listSearch" class="search" type="search" placeholder="Suchen …" title="Sucht in Titel, Nummer, Projekt, Format, Plattform und Notiz" value="${esc(ui.search)}"><label class="chk"><input type="checkbox" id="listPast" ${ui.showPast ? 'checked' : ''}> Vergangene zeigen</label></div>`;
+  }
+  renderListBody();
+}
+function renderListBody() {
+  const q = ui.search.toLowerCase();
+  let list = visibleEntries().filter(e => ui.showPast || e.datum >= TODAY || warnLevel(e) === 'overdue');
+  if (q) list = list.filter(e => [entryLabel(e), e.format, e.notiz, e.plattform.join(' '), (projById(e.projekt) || {}).name].join(' ').toLowerCase().includes(q));
+  list.sort(cmpEntries);
+  if (!list.length) { view.innerHTML = `<div class="rows"><div class="empty-rows">${q ? 'Nichts gefunden.' : 'Keine Einträge ab heute. „Vergangene zeigen“ blendet ältere ein.'}</div></div>`; return; }
+  const map = byDate(list);
+  let h = '', lastMonth = '';
+  for (const d of Object.keys(map).sort()) {
+    const mm = d.slice(0, 7);
+    if (mm !== lastMonth) { h += `<h2 class="mhead">${MONTHS[+d.slice(5, 7) - 1]} ${d.slice(0, 4)}</h2>`; lastMonth = mm; }
+    const hol = holidayName(d), rel = relDay(d);
+    h += `<div class="group"><div class="ghead">${fmtShort(d)}<span class="muted">${[rel, 'KW ' + isoWeek(d), hol].filter(Boolean).join(' · ')}</span></div>${rowsHTML(map[d], false)}</div>`;
+  }
+  view.innerHTML = h;
+}
+
+function renderToday() {
+  vbar.innerHTML = `<h1 class="vtitle">Heute <span class="muted" style="font-weight:500">· ${fmtLong(TODAY)}</span></h1>${holidayName(TODAY) ? `<span class="tag">${esc(holidayName(TODAY))}</span>` : ''}`;
+  const all = visibleEntries();
+  const overdue = all.filter(e => warnLevel(e) === 'overdue').sort(cmpEntries);
+  const today = all.filter(e => e.datum === TODAY).sort(cmpEntries);
+  const next = all.filter(e => { const d = daysBetween(TODAY, e.datum); return d >= 1 && d <= 7; }).sort(cmpEntries);
+  const visibleProjects = state.projects.filter(p => p.sichtbar !== false);
+  const cards = visibleProjects.map(p => {
+    const es = state.entries.filter(e => e.projekt === p.id && !e.entfernt);
+    const posts = es.filter(e => e.typ === 'post');
+    const od = es.filter(e => warnLevel(e) === 'overdue').length;
+    const soon = es.filter(e => { const d = daysBetween(TODAY, e.datum); return d >= 0 && d <= 7 && !DONE(e.status); }).length;
+    const open = es.filter(e => !DONE(e.status)).length;
+    const posted = posts.filter(e => e.status === 'gepostet').length;
+    const pct = posts.length ? Math.round(posted / posts.length * 100) : 0;
+    return `<div class="pcard" style="--pc:${p.farbe}"><div class="pc-h"><span class="dot"></span><strong>${esc(p.name)}</strong><span class="pk">${esc(p.kuerzel)}</span></div>`
+      + `<div class="pc-n"><span class="${od ? 'red' : ''}"><b>${od}</b> überfällig</span><span><b>${soon}</b> in 7 Tagen</span><span><b>${open}</b> offen</span></div>`
+      + `<div class="prog"><i style="width:${pct}%"></i></div><div class="small muted">${posted} von ${plural(posts.length, 'Post', 'Posts')} gepostet</div></div>`;
+  }).join('');
+  let h = cards ? `<div class="cards">${cards}</div>` : '';
+  if (overdue.length) h += `<div class="sect red"><h2>Überfällig <span class="count">${overdue.length}</span></h2>${rowsHTML(overdue, true)}</div>`;
+  h += `<div class="sect"><h2>Heute <span class="count">${fmtShort(TODAY)}</span></h2>${rowsHTML(today, false, 'Heute steht nichts an.')}</div>`;
+  const map = byDate(next);
+  h += `<div class="sect"><h2>Nächste 7 Tage <span class="count">${next.length}</span></h2>`;
+  if (!next.length) h += rowsHTML([], false, 'In den nächsten 7 Tagen steht nichts an.');
+  for (const d of Object.keys(map).sort()) {
+    const hol = holidayName(d);
+    h += `<div class="group"><div class="ghead">${fmtShort(d)}<span class="muted">${[relDay(d), hol].filter(Boolean).join(' · ')}</span></div>${rowsHTML(map[d], false)}</div>`;
+  }
+  view.innerHTML = h + '</div>';
+}
+
+// ================================================================ Modal, Popover, Toast
+const modals = [];
+function openModal(title, html, { wide = false, onClose } = {}) {
+  const back = document.createElement('div');
+  back.className = 'modal-back';
+  back.innerHTML = `<div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="mtop"><h2>${esc(title)}</h2><button class="iconbtn" data-close aria-label="Schließen">${ICON.x}</button></div><div class="mbody">${html}</div></div>`;
+  let downOnBack = false;
+  back.addEventListener('mousedown', ev => { downOnBack = ev.target === back; });
+  back.addEventListener('click', ev => {
+    if ((ev.target === back && downOnBack) || ev.target.closest('[data-close]')) closeModal(back);
+  });
+  document.body.appendChild(back);
+  modals.push({ el: back, onClose });
+  document.body.classList.add('modal-open');
+  const af = back.querySelector('[autofocus]');
+  if (af && !isNarrow()) af.focus();
+  return back;
+}
+function closeModal(el) {
+  const i = el ? modals.findIndex(m => m.el === el) : modals.length - 1;
+  if (i < 0) return;
+  const [m] = modals.splice(i, 1);
+  m.el.remove();
+  if (m.onClose) m.onClose();
+  if (!modals.length) document.body.classList.remove('modal-open');
+}
+const closeAllModals = () => { while (modals.length) closeModal(); };
+
+const pop = $('#pop');
+let popPick = null, popAnchor = null;
+function openPop(anchor, html, onPick) {
+  pop.innerHTML = html;
+  pop.hidden = false;
+  popPick = onPick;
+  const r = anchor.getBoundingClientRect();
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  let left = Math.min(r.left, innerWidth - w - 8), top = r.bottom + 4;
+  if (top + h > innerHeight - 8) top = Math.max(8, r.top - h - 4);
+  pop.style.left = Math.max(8, left) + 'px';
+  pop.style.top = top + 'px';
+  const first = pop.querySelector('button');
+  if (first) first.focus({ preventScroll: true });
+}
+function closePop() { pop.hidden = true; popPick = null; }
+pop.addEventListener('click', ev => {
+  const b = elOf(ev).closest('button');
+  if (!b) return;
+  const f = popPick;
+  closePop();
+  if (f) f(b);
+});
+
+let toastTimer;
+function toast(msg, withUndo) {
+  const t = $('#toast');
+  t.innerHTML = `<span>${esc(msg)}</span>${withUndo ? '<button data-action="undo">Rückgängig</button>' : ''}`;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), withUndo ? 6000 : 3500);
+}
+
+// ================================================================ Status-Menü und Hauptmenü
+function openStatusMenu(anchor, uid) {
+  const e = entryByUid(uid);
+  if (!e) return;
+  const pc = projColor(e);
+  openPop(anchor, `<div class="mlabel">Status</div>` + STATUS[e.typ].map(([k, l]) =>
+    `<button class="mi" data-status="${k}" style="--pc:${pc}">${statusSVG(e.typ, k)}<span>${l}</span>${e.status === k ? '<span class="ok">✓</span>' : ''}</button>`).join(''), b => {
+    const k = b.dataset.status;
+    if (k && k !== e.status) mutate(`${entryLabel(e).slice(0, 40)}: ${statusLabel(e.typ, k)}`, () => { e.status = k; });
+  });
+}
+function openMainMenu(anchor) {
+  const t = state.settings.theme;
+  const opt = (k, l) => `<button class="mi" data-theme-set="${k}"><span>${l}</span>${t === k ? '<span class="ok">✓</span>' : ''}</button>`;
+  openPop(anchor, `
+    <button class="mi" data-m="import">Plan importieren …</button>
+    <hr><button class="mi" data-m="backup-save">Backup sichern</button><button class="mi" data-m="backup-load">Backup laden …</button>
+    <hr><button class="mi" data-m="copy-prompt">Prompt für Chats kopieren</button><button class="mi" data-m="example-download">Beispieldatei herunterladen</button>
+    <hr><div class="mlabel">Darstellung</div>${opt('auto', 'Automatisch (wie macOS)')}${opt('light', 'Hell')}${opt('dark', 'Dunkel')}
+    <hr><button class="mi danger" data-m="wipe">Alle Daten löschen …</button>`, b => {
+    if (b.dataset.themeSet) { state.settings.theme = b.dataset.themeSet; persist(); applyTheme(); return; }
+    action(b.dataset.m, b);
+  });
+}
+
+// ================================================================ Editor
+function openEditor(uid, defaults = {}) {
+  closeAllModals();
+  if (!state.projects.length) { toast('Lege zuerst ein Projekt an oder importiere einen Plan.'); openProject(null); return; }
+  const e0 = uid ? entryByUid(uid) : null;
+  if (uid && !e0) return;
+  const firstVisible = state.projects.find(p => p.sichtbar !== false) || state.projects[0];
+  const pid = e0 ? e0.projekt : (projById(ui.lastProject) ? ui.lastProject : firstVisible.id);
+  const d = e0 ? clone(e0) : { projekt: pid, typ: 'post', nr: nextNr(pid, 'post'), titel: '', datum: defaults.datum || TODAY, uhrzeit: '', plattform: defaultPlatforms(pid), format: '', status: 'offen', notiz: '', link: '' };
+  let nrTouched = !!e0;
+  const formats = [...new Set(state.entries.map(e => e.format).filter(Boolean))].sort();
+  const plats = [...new Set([...PLATFORMS, ...state.entries.flatMap(e => e.plattform)])];
+  const html = `
+  ${e0 && e0.entfernt ? `<div class="note amber">Dieser Eintrag ist im zuletzt importierten Plan nicht mehr enthalten. <button type="button" class="linkbtn" data-ed="keep">Behalten</button> oder unten löschen.</div>` : ''}
+  <form id="edForm" autocomplete="off">
+    <div class="grid2">
+      <label class="field">Projekt<select name="projekt">${state.projects.map(p => `<option value="${esc(p.id)}" ${p.id === d.projekt ? 'selected' : ''}>${esc(p.name)} (${esc(p.kuerzel)})</option>`).join('')}</select></label>
+      <div class="field">Art<div class="seg" id="edTyp"><button type="button" data-typ="post">Post</button><button type="button" data-typ="todo">To-do</button></div></div>
+    </div>
+    <div class="gridnr">
+      <label class="field">Nr.<input name="nr" value="${esc(d.nr)}" maxlength="8"></label>
+      <label class="field">Titel<input name="titel" value="${esc(d.titel)}" required autofocus maxlength="160"></label>
+    </div>
+    <div class="grid2">
+      <label class="field"><span id="edDateLbl">Datum</span><input type="date" name="datum" value="${esc(d.datum)}" required></label>
+      <label class="field">Uhrzeit (optional)<input type="time" name="uhrzeit" value="${esc(d.uhrzeit)}"></label>
+    </div>
+    <div class="field" id="edPlat">Plattformen<div class="plats">${plats.map(p => `<label><input type="checkbox" name="plattform" value="${esc(p)}" ${d.plattform.includes(p) ? 'checked' : ''}> ${esc(p)}</label>`).join('')}</div></div>
+    <label class="field">Format (optional)<input name="format" value="${esc(d.format)}" list="edFormats" placeholder="z. B. Reel 20 s, Karussell, Story"><datalist id="edFormats">${formats.map(f => `<option value="${esc(f)}">`).join('')}</datalist></label>
+    <div class="field">Status<div class="seg" id="edStatus"></div></div>
+    <label class="field">Notiz (optional)<textarea name="notiz" rows="2">${esc(d.notiz)}</textarea></label>
+    <label class="field">Link (optional)<input type="url" name="link" value="${esc(d.link)}" placeholder="https://…"></label>
+    <div class="mfoot">${e0 ? '<button type="button" class="btn danger" data-ed="delete">Löschen</button>' : ''}<span class="spacer"></span><button type="button" class="btn" data-close>Abbrechen</button><button type="submit" class="btn primary">${e0 ? 'Speichern' : 'Anlegen'}</button></div>
+  </form>`;
+  const m = openModal(e0 ? 'Eintrag bearbeiten' : 'Neuer Eintrag', html);
+  const f = $('#edForm', m);
+  const syncTyp = () => {
+    $$('#edTyp button', m).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.typ === d.typ)));
+    if (d.typ === 'todo' && (d.status === 'fertig' || d.status === 'gepostet')) d.status = 'erledigt';
+    if (d.typ === 'post' && d.status === 'erledigt') d.status = 'gepostet';
+    $('#edPlat', m).hidden = d.typ === 'todo';
+    $('#edDateLbl', m).textContent = d.typ === 'todo' ? 'Fällig am' : 'Datum';
+    $('#edStatus', m).innerHTML = STATUS[d.typ].map(([k, l]) => `<button type="button" data-st="${k}" aria-pressed="${d.status === k}" style="--pc:${(projById(f.projekt.value) || {}).farbe}">${statusSVG(d.typ, k)}${l}</button>`).join('');
+  };
+  syncTyp();
+  f.nr.addEventListener('input', () => { nrTouched = true; });
+  f.projekt.addEventListener('change', () => { if (!nrTouched) f.nr.value = nextNr(f.projekt.value, d.typ); syncTyp(); });
+  m.addEventListener('click', ev => {
+    const t = elOf(ev).closest('[data-typ],[data-st],[data-ed]');
+    if (!t) return;
+    if (t.dataset.typ) { d.typ = t.dataset.typ; if (!nrTouched) f.nr.value = nextNr(f.projekt.value, d.typ); syncTyp(); }
+    else if (t.dataset.st) { d.status = t.dataset.st; syncTyp(); }
+    else if (t.dataset.ed === 'delete') {
+      if (!confirm(`„${entryLabel(e0)}“ löschen?`)) return;
+      closeModal(m);
+      mutate('Eintrag gelöscht', () => { state.entries = state.entries.filter(x => x !== e0); });
+    } else if (t.dataset.ed === 'keep') {
+      mutate('Eintrag bleibt erhalten', () => { delete e0.entfernt; e0.lokal = true; delete e0.src; });
+      t.closest('.note').remove();
+    }
+  });
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const v = {
+      typ: d.typ, nr: str(f.nr.value), titel: str(f.titel.value), datum: f.datum.value, uhrzeit: f.uhrzeit.value || '',
+      plattform: d.typ === 'post' ? $$('input[name=plattform]:checked', f).map(x => x.value) : [],
+      format: str(f.format.value), status: d.status, notiz: str(f.notiz.value), link: str(f.link.value),
+    };
+    if (!v.titel) { f.titel.focus(); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v.datum)) { f.datum.focus(); return; }
+    const newPid = f.projekt.value;
+    ui.lastProject = newPid;
+    closeModal(m);
+    if (e0) {
+      mutate('Gespeichert', () => {
+        Object.assign(e0, v);
+        if (newPid !== e0.projekt) {
+          e0.projekt = newPid; e0.id = 'lokal-' + rid(); e0.lokal = true; delete e0.src; delete e0.entfernt;
+          e0.uid = uidOf(e0.projekt, e0.id);
+        }
+      });
+    } else {
+      const id = 'lokal-' + rid();
+      mutate(`Angelegt: ${v.titel.slice(0, 40)}`, () => { state.entries.push(Object.assign({ uid: uidOf(newPid, id), projekt: newPid, id, lokal: true }, v)); });
+    }
+  });
+}
+
+// ================================================================ Projekt
+function openProject(pid) {
+  closeAllModals();
+  const p = pid ? projById(pid) : null;
+  const d = p ? clone(p) : { name: '', kuerzel: '', farbe: pickColor() };
+  const count = p ? state.entries.filter(e => e.projekt === p.id).length : 0;
+  const html = `<form id="pjForm" autocomplete="off">
+    <div class="gridnr" style="grid-template-columns:1fr 90px"><label class="field">Name<input name="name" value="${esc(d.name)}" required autofocus></label><label class="field">Kürzel<input name="kuerzel" value="${esc(d.kuerzel)}" maxlength="4" placeholder="${esc(abbr(d.name) || 'AB')}"></label></div>
+    <div class="field">Farbe<div class="swatches" id="pjSw"></div></div>
+    ${p ? `<p class="small muted">ID: <code>${esc(p.id)}</code> · ${plural(count, 'Eintrag', 'Einträge')}${p.importiert_am ? ` · zuletzt importiert ${fmtStamp(p.importiert_am)}` : ''}</p>
+    <div class="btnrow" style="margin-bottom:8px"><button type="button" class="btn sm" data-pj="export">Als Plan exportieren</button></div>
+    <p class="small muted" style="margin-top:0">Der Export hat das Import-Format, mit deinem aktuellen Status. Du kannst ihn einem Chat geben, damit er auf dem neuesten Stand weiterplant.</p>` : ''}
+    <div class="mfoot">${p ? '<button type="button" class="btn danger" data-pj="delete">Projekt löschen</button>' : ''}<span class="spacer"></span><button type="button" class="btn" data-close>Abbrechen</button><button type="submit" class="btn primary">${p ? 'Speichern' : 'Anlegen'}</button></div>
+  </form>`;
+  const m = openModal(p ? 'Projekt bearbeiten' : 'Neues Projekt', html);
+  const f = $('#pjForm', m);
+  const drawSw = () => {
+    $('#pjSw', m).innerHTML = PALETTE.map(c => `<button type="button" data-c="${c}" style="background:${c}" aria-label="Farbe ${c}" aria-pressed="${c.toLowerCase() === d.farbe.toLowerCase()}"></button>`).join('')
+      + `<input type="color" value="${esc(d.farbe)}" aria-label="Eigene Farbe" title="Eigene Farbe">`;
+    $('#pjSw input', m).addEventListener('input', ev => { d.farbe = ev.target.value.toUpperCase(); $$('#pjSw button', m).forEach(b => b.setAttribute('aria-pressed', 'false')); });
+  };
+  drawSw();
+  f.elements.name.addEventListener('input', () => { f.elements.kuerzel.placeholder = abbr(f.elements.name.value); });
+  m.addEventListener('click', ev => {
+    const t = elOf(ev).closest('[data-c],[data-pj]');
+    if (!t) return;
+    if (t.dataset.c) { d.farbe = t.dataset.c; drawSw(); }
+    else if (t.dataset.pj === 'export') exportPlan(p);
+    else if (t.dataset.pj === 'delete') {
+      if (!confirm(`Projekt „${p.name}“ mit ${plural(count, 'Eintrag', 'Einträgen')} löschen?`)) return;
+      closeModal(m);
+      mutate(`Projekt „${p.name}“ gelöscht`, () => {
+        state.projects = state.projects.filter(x => x.id !== p.id);
+        state.entries = state.entries.filter(x => x.projekt !== p.id);
+      });
+    }
+  });
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const name = str(f.elements.name.value);
+    if (!name) return;
+    const kuerzel = (str(f.elements.kuerzel.value) || abbr(name)).toUpperCase().slice(0, 4);
+    closeModal(m);
+    if (p) mutate('Projekt gespeichert', () => { p.name = name; p.kuerzel = kuerzel; p.farbe = d.farbe; });
+    else mutate(`Projekt „${name}“ angelegt`, () => { state.projects.push({ id: uniqueProjId(slugify(name) || 'projekt'), name, kuerzel, farbe: d.farbe, sichtbar: true }); });
+  });
+}
+
+// ================================================================ Tag (alle Einträge)
+function openDay(date) {
+  closeAllModals();
+  const list = visibleEntries().filter(e => e.datum === date).sort(cmpEntries);
+  const hol = holidayName(date);
+  openModal(fmtLong(date), `<div class="daylist">${hol ? `<p class="small muted" style="margin-top:0">${esc(hol)} (Feiertag in Bayern)</p>` : ''}${rowsHTML(list, false, 'Keine Einträge an diesem Tag.')}<button class="btn" data-action="new" data-date="${date}">${ICON.plus.replace('<svg', '<svg width="14" height="14"')} Eintrag an diesem Tag</button></div>`);
+}
+
+// ================================================================ Import: Prüfen
+function normDate(v) {
+  const s = str(v);
+  if (!s) return { ok: false, msg: 'fehlt' };
+  const valid = (y, m, d) => { const t = new Date(y, m - 1, d); return t.getFullYear() === y && t.getMonth() === m - 1 && t.getDate() === d; };
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{2}))?/.exec(s);
+  if (m) {
+    if (!valid(+m[1], +m[2], +m[3])) return { ok: false, msg: `"${s}" ist kein gültiges Datum` };
+    return { ok: true, date: `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`, time: m[4] ? `${pad(+m[4])}:${m[5]}` : '', warn: m[4] ? `Datum mit Uhrzeit "${s}" aufgeteilt` : '' };
+  }
+  m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(s);
+  if (m) {
+    if (!valid(+m[3], +m[2], +m[1])) return { ok: false, msg: `"${s}" ist kein gültiges Datum` };
+    return { ok: true, date: `${m[3]}-${pad(+m[2])}-${pad(+m[1])}`, time: '', warn: `Datum "${s}" in JJJJ-MM-TT umgewandelt` };
+  }
+  return { ok: false, msg: `"${s}" hat das falsche Format (erwartet JJJJ-MM-TT, z. B. 2026-10-13)` };
+}
+function normTime(v) {
+  const s = str(v);
+  if (!s) return { t: '' };
+  let m = /^(\d{1,2})[:.](\d{2})(?:\s*Uhr)?$/i.exec(s);
+  if (m && +m[1] < 24 && +m[2] < 60) return { t: `${pad(+m[1])}:${m[2]}` };
+  m = /^(\d{1,2})\s*Uhr$/i.exec(s);
+  if (m && +m[1] < 24) return { t: `${pad(+m[1])}:00`, warn: `Uhrzeit "${s}" als ${pad(+m[1])}:00 gelesen` };
+  return { t: '', warn: `Uhrzeit "${s}" nicht lesbar (erwartet HH:MM), ignoriert` };
+}
+function normPlatform(p) {
+  const k = str(p).toLowerCase().replace(/\s+/g, ' ');
+  const map = { instagram: 'Instagram', insta: 'Instagram', ig: 'Instagram', tiktok: 'TikTok', 'tik tok': 'TikTok', tt: 'TikTok',
+    youtube: 'YouTube Shorts', 'youtube shorts': 'YouTube Shorts', 'yt shorts': 'YouTube Shorts', shorts: 'YouTube Shorts', yt: 'YouTube Shorts',
+    facebook: 'Facebook', fb: 'Facebook', linkedin: 'LinkedIn', pinterest: 'Pinterest' };
+  return map[k] || str(p);
+}
+function normTyp(v) {
+  const k = str(v).toLowerCase();
+  if (!k) return { t: 'post', warn: '"typ" fehlt, als "post" gelesen' };
+  if (['post', 'beitrag', 'posting', 'veröffentlichung'].includes(k)) return { t: 'post' };
+  if (['todo', 'to-do', 'to do', 'aufgabe', 'task', 'zuarbeit'].includes(k)) return { t: 'todo', warn: k === 'todo' ? '' : `"typ" "${v}" als "todo" gelesen` };
+  return { t: 'post', warn: `unbekannter "typ" "${v}", als "post" gelesen` };
+}
+function normStatus(v, typ) {
+  const k = str(v).toLowerCase().replace(/[\s-]+/g, '_');
+  if (!k) return { s: 'offen' };
+  if (k === 'offen' || k === 'in_arbeit' || (typ === 'post' && (k === 'fertig' || k === 'gepostet')) || (typ === 'todo' && k === 'erledigt')) return { s: k };
+  if (typ === 'todo' && (k === 'fertig' || k === 'gepostet' || k === 'done')) return { s: 'erledigt' };
+  if (typ === 'post' && (k === 'erledigt' || k === 'veröffentlicht' || k === 'online' || k === 'posted')) return { s: 'gepostet', warn: `Status "${v}" als "gepostet" gelesen` };
+  if (['geplant', 'todo', 'open', 'neu'].includes(k)) return { s: 'offen', warn: `Status "${v}" als "offen" gelesen` };
+  if (['in_bearbeitung', 'in_progress', 'arbeit'].includes(k)) return { s: 'in_arbeit', warn: `Status "${v}" als "in_arbeit" gelesen` };
+  if (k === 'bereit' || k === 'ready') return { s: typ === 'post' ? 'fertig' : 'erledigt', warn: `Status "${v}" als "${typ === 'post' ? 'fertig' : 'erledigt'}" gelesen` };
+  return { s: 'offen', warn: `unbekannter Status "${v}", als "offen" gelesen` };
+}
+
+function validatePlan(raw) {
+  const E = [], W = [];
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { errors: ['Die Datei enthält kein Plan-Objekt { … }.'], warnings: [] };
+  if (raw.format !== 'social-media-plan') W.push(raw.format ? `Unbekanntes "format": "${raw.format}" (erwartet "social-media-plan"). Ich versuche es trotzdem.` : 'Feld "format" fehlt (erwartet "social-media-plan").');
+  if (raw.version !== undefined && raw.version !== 1) W.push(`"version" ist ${raw.version}, die App kennt Version 1.`);
+  const pr = raw.projekt && typeof raw.projekt === 'object' ? raw.projekt : null;
+  if (!pr) E.push('Feld "projekt" fehlt (mit "id", "name" und "kuerzel").');
+  let pid = str(pr && pr.id), name = str(pr && pr.name), kz = str(pr && pr.kuerzel), farbe = str(pr && pr.farbe);
+  if (pr && !name && !pid) E.push('"projekt.name" und "projekt.id" fehlen.');
+  if (!name && pid) { name = pid; W.push('"projekt.name" fehlt, die ID wird als Name verwendet.'); }
+  if (!pid && name) { pid = slugify(name); W.push(`"projekt.id" fehlt, verwendet wird "${pid}". Beim nächsten Export muss dieselbe ID drinstehen.`); }
+  else if (pid && !/^[a-z0-9][a-z0-9-]*$/.test(pid)) { const s = slugify(pid) || 'projekt'; W.push(`"projekt.id" "${pid}" enthält unerlaubte Zeichen, verwendet wird "${s}".`); pid = s; }
+  if (!kz) kz = abbr(name);
+  if (kz.length > 4) W.push(`"kuerzel" "${kz}" ist zu lang, gekürzt auf "${kz.slice(0, 4).toUpperCase()}".`);
+  kz = kz.toUpperCase().slice(0, 4);
+  if (farbe && !hexToRgb(farbe)) { W.push(`"projekt.farbe" "${farbe}" ist kein Farbwert wie "#29AEB1" und wird ignoriert.`); farbe = ''; }
+  const list = raw.eintraege;
+  if (!Array.isArray(list)) { E.push('Feld "eintraege" fehlt oder ist keine Liste [ … ].'); return { errors: E, warnings: W }; }
+  if (!list.length) E.push('"eintraege" ist leer.');
+  const ids = new Set(), out = [];
+  list.forEach((r, n) => {
+    const where = `Eintrag ${n + 1}${r && r.id != null && r.id !== '' ? ` (id "${r.id}")` : ''}`;
+    if (!r || typeof r !== 'object' || Array.isArray(r)) { E.push(`${where}: ist kein Objekt { … }.`); return; }
+    const id = str(r.id);
+    if (!id) { E.push(`${where}: "id" fehlt.`); return; }
+    if (ids.has(id)) { E.push(`${where}: "id" "${id}" kommt doppelt vor.`); return; }
+    ids.add(id);
+    const ty = normTyp(r.typ); if (ty.warn) W.push(`${where}: ${ty.warn}.`);
+    const titel = str(r.titel); if (!titel) E.push(`${where}: "titel" fehlt.`);
+    const dt = normDate(r.datum);
+    if (!dt.ok) E.push(`${where}: "datum" ${dt.msg}.`); else if (dt.warn) W.push(`${where}: ${dt.warn}.`);
+    const tm = normTime(r.uhrzeit !== undefined && r.uhrzeit !== null && r.uhrzeit !== '' ? r.uhrzeit : (dt.time || ''));
+    if (tm.warn) W.push(`${where}: ${tm.warn}.`);
+    let pl = Array.isArray(r.plattform) ? r.plattform : (str(r.plattform) ? str(r.plattform).split(/\s*[,;/+]\s*/) : []);
+    pl = [...new Set(pl.map(normPlatform).filter(Boolean))];
+    if (ty.t === 'post' && !pl.length) W.push(`${where}: keine "plattform" angegeben.`);
+    if (ty.t === 'todo') pl = [];
+    const stt = normStatus(r.status, ty.t); if (stt.warn) W.push(`${where}: ${stt.warn}.`);
+    const nr = str(r.nr); if (!nr) W.push(`${where}: "nr" fehlt.`);
+    out.push({ id, typ: ty.t, nr, titel, datum: dt.ok ? dt.date : '', uhrzeit: tm.t, plattform: pl, format: str(r.format), status: stt.s, notiz: str(r.notiz), link: str(r.link) });
+  });
+  return { plan: { projekt: { id: pid, name, kuerzel: kz, farbe }, exportiert_am: str(raw.exportiert_am), eintraege: out }, errors: E, warnings: W };
+}
+
+function parseJSONText(text) {
+  let s = String(text || '').replace(/^﻿/, '').trim();
+  const fence = /```[a-zA-Z]*\s*([\s\S]*?)```/.exec(s);
+  if (fence) s = fence[1].trim();
+  if (!/^[[{]/.test(s)) { const i = s.search(/[[{]/); if (i >= 0) s = s.slice(i); }
+  const lastClose = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'));
+  if (lastClose >= 0) s = s.slice(0, lastClose + 1);
+  if (!s) return { ok: false, msg: 'Kein Inhalt gefunden.' };
+  try { return { ok: true, data: JSON.parse(s) }; } catch (err) {
+    const fixed = s.replace(/[“”„]/g, '"').replace(/,(\s*[}\]])/g, '$1');
+    try { return { ok: true, data: JSON.parse(fixed), warn: 'Kleine JSON-Fehler (überzählige Kommas oder typografische Anführungszeichen) automatisch korrigiert.' }; } catch (err2) {}
+    return { ok: false, msg: `Kein gültiges JSON (${err.message}). Häufige Ursachen: Komma nach dem letzten Element, Kommentare, einfache Anführungszeichen oder eine abgeschnittene Antwort.` };
+  }
+}
+
+// ================================================================ Import: Zusammenführen
+function srcOf(i) { const s = {}; for (const f of SYNC_FIELDS) s[f] = clone(i[f]); s.status = i.status; return s; }
+function newEntry(pid, i) {
+  const e = { uid: uidOf(pid, i.id), projekt: pid, id: i.id };
+  for (const f of SYNC_FIELDS) e[f] = clone(i[f]);
+  e.status = i.status;
+  e.src = srcOf(i);
+  return e;
+}
+function fixStatusForTyp(s, typ) {
+  if (typ === 'todo' && (s === 'fertig' || s === 'gepostet')) return 'erledigt';
+  if (typ === 'post' && s === 'erledigt') return 'gepostet';
+  return s;
+}
+// Dreiwege-Abgleich: Hat der neue Plan ein Feld gegenüber dem letzten Import geändert, gewinnt der Plan.
+// Sonst bleibt deine lokale Änderung (Verschieben, Notiz …). Beim Status gilt der weiter fortgeschrittene.
+function mergePlan(pid, plan, deleteMissing) {
+  const existing = state.entries.filter(e => e.projekt === pid);
+  const byId = new Map(existing.map(e => [e.id, e]));
+  const seen = new Set(), out = [];
+  const st = { neu: 0, geaendert: 0, gleich: 0, fehlt: 0, lokal: 0 };
+  for (const i of plan.eintraege) {
+    seen.add(i.id);
+    const old = byId.get(i.id);
+    if (!old) { out.push(newEntry(pid, i)); st.neu++; continue; }
+    const e = clone(old), base = old.src || {};
+    let changed = false;
+    for (const f of SYNC_FIELDS) {
+      if (!same(i[f], base[f]) && !same(i[f], e[f])) { e[f] = clone(i[f]); changed = true; }
+    }
+    let s = fixStatusForTyp(e.status, e.typ);
+    const is = fixStatusForTyp(i.status, e.typ);
+    if (RANK[is] > RANK[s]) s = is;
+    if (s !== e.status) { e.status = s; changed = true; }
+    if (e.entfernt) { delete e.entfernt; changed = true; }
+    e.src = srcOf(i);
+    if (changed) st.geaendert++; else st.gleich++;
+    out.push(e);
+  }
+  for (const e of existing) {
+    if (seen.has(e.id)) continue;
+    if (e.lokal) { out.push(e); st.lokal++; continue; }
+    st.fehlt++;
+    if (!deleteMissing) { const c = clone(e); c.entfernt = true; out.push(c); }
+  }
+  return { entries: out, stats: st };
+}
+function applyImport(plan, mode, deleteMissing) {
+  const P = plan.projekt;
+  let proj = projById(P.id);
+  let fresh = false;
+  if (!proj || mode === 'new') {
+    const id = proj ? uniqueProjId(P.id) : P.id;
+    let name = P.name;
+    if (proj) { let n = 2; while (state.projects.some(x => x.name === `${P.name} (${n})`)) n++; name = `${P.name} (${n})`; }
+    proj = { id, name, kuerzel: P.kuerzel, farbe: pickColor(P.farbe), sichtbar: true, src: { name: P.name, kuerzel: P.kuerzel } };
+    state.projects.push(proj);
+    fresh = true;
+  } else {
+    const src = proj.src || {};
+    if (P.name !== src.name && P.name !== proj.name) proj.name = P.name;
+    if (P.kuerzel !== src.kuerzel && P.kuerzel !== proj.kuerzel) proj.kuerzel = P.kuerzel;
+    proj.src = { name: P.name, kuerzel: P.kuerzel };
+  }
+  proj.importiert_am = new Date().toISOString();
+  const list = (fresh || mode === 'replace') ? plan.eintraege.map(i => newEntry(proj.id, i)) : mergePlan(proj.id, plan, deleteMissing).entries;
+  state.entries = state.entries.filter(e => e.projekt !== proj.id).concat(list);
+  return proj;
+}
+
+// ================================================================ Import: Dialog
+const imp = { modal: null, jobs: [], done: 0 };
+function jobsFromText(name, text) {
+  const r = parseJSONText(text);
+  if (!r.ok) return [{ name, errors: [r.msg], warnings: [] }];
+  if (r.data && r.data.format === 'social-media-planer-backup') return [{ name, backup: r.data }];
+  const arr = Array.isArray(r.data) ? r.data : [r.data];
+  return arr.map(obj => { const v = validatePlan(obj); if (r.warn) v.warnings.unshift(r.warn); return Object.assign({ name }, v); });
+}
+function readFiles(files) {
+  return Promise.all([...files].map(f => f.text().then(text => ({ name: f.name, text }), () => ({ name: f.name, text: '' }))));
+}
+function openImport(text, files) {
+  if (!imp.modal || !document.body.contains(imp.modal)) {
+    closeAllModals();
+    imp.jobs = []; imp.done = 0;
+    imp.modal = openModal('Plan importieren', `
+      <div id="impIn">
+        <div class="dropzone"><p><strong>JSON-Datei hierher ziehen</strong> oder <button type="button" class="linkbtn" data-imp="pick">Datei auswählen</button></p><p class="small muted">Mehrere Dateien auf einmal gehen auch.</p></div>
+        <label class="field">oder den Plan aus dem Chat hier einfügen<textarea id="impText" class="imptext" rows="7" spellcheck="false" placeholder='{ "format": "social-media-plan", … }'></textarea></label>
+        <div class="mfoot"><span class="spacer"></span><button type="button" class="btn primary" data-imp="check">Prüfen</button></div>
+      </div>
+      <div id="impOut"></div>
+      <div class="imphelp"><strong>Für andere Chats:</strong> <button type="button" class="linkbtn" data-imp="prompt">Prompt kopieren</button> · <button type="button" class="linkbtn" data-imp="example">Beispieldatei herunterladen</button> · <button type="button" class="linkbtn" data-imp="example-load">Beispiel ausprobieren</button></div>`,
+      { wide: true, onClose: () => { imp.modal = null; imp.jobs = []; } });
+    imp.modal.addEventListener('click', onImpClick);
+  }
+  if (text) { $('#impText', imp.modal).value = text; addJobs(jobsFromText('Eingefügter Text', text)); }
+  if (files && files.length) readFiles(files).then(list => addJobs(list.flatMap(f => jobsFromText(f.name, f.text))));
+}
+function addJobs(jobs) { imp.jobs.push(...jobs); showJob(); }
+function showJob() {
+  if (!imp.modal) return;
+  const out = $('#impOut', imp.modal);
+  const job = imp.jobs[0];
+  $('#impIn', imp.modal).hidden = !!job;
+  if (!job) { out.innerHTML = ''; return; }
+  const of = imp.jobs.length + imp.done > 1 ? ` · ${imp.done + 1} von ${imp.jobs.length + imp.done}` : '';
+  const skip = `<button type="button" class="btn" data-imp="skip">${imp.jobs.length > 1 ? 'Überspringen' : 'Zurück'}</button>`;
+  if (job.backup) {
+    const b = job.backup, dat = (b.daten || {});
+    out.innerHTML = `<div class="pv"><div class="pv-h"><strong>Backup vom ${esc(fmtStamp(b.erstellt_am))}</strong><span class="small muted">${esc(job.name)}${of}</span></div>
+      <p>${plural((dat.projects || []).length, 'Projekt', 'Projekte')} · ${plural((dat.entries || []).length, 'Eintrag', 'Einträge')}</p>
+      <div class="note amber">Wiederherstellen ersetzt <strong>alle</strong> aktuellen Daten in diesem Browser (${plural(state.projects.length, 'Projekt', 'Projekte')}, ${plural(state.entries.length, 'Eintrag', 'Einträge')}).</div>
+      <div class="mfoot"><span class="spacer"></span>${skip}<button type="button" class="btn primary" data-imp="restore">Backup wiederherstellen</button></div></div>`;
+    return;
+  }
+  if (job.errors.length) {
+    out.innerHTML = `<div class="pv"><div class="pv-h"><strong>${esc(job.plan ? job.plan.projekt.name || 'Plan' : 'Plan')}</strong><span class="small muted">${esc(job.name)}${of}</span></div>
+      <div class="note red"><strong>So kann ich den Plan nicht importieren:</strong><ul>${job.errors.slice(0, 25).map(x => `<li>${esc(x)}</li>`).join('')}${job.errors.length > 25 ? `<li>… und ${job.errors.length - 25} weitere</li>` : ''}</ul></div>
+      <p class="small muted">Tipp: Gib dem Chat diese Liste zusammen mit dem Export-Prompt und lass ihn neu exportieren.</p>
+      <div class="mfoot"><button type="button" class="btn sm" data-imp="copy-errors">Fehler kopieren</button><span class="spacer"></span>${skip}</div></div>`;
+    return;
+  }
+  const P = job.plan.projekt, es = job.plan.eintraege;
+  const posts = es.filter(e => e.typ === 'post').length, todos = es.length - posts;
+  const dates = es.map(e => e.datum).sort();
+  const exists = projById(P.id);
+  const color = exists ? exists.farbe : pickColor(P.farbe);
+  let choice = '';
+  if (exists) {
+    const st = mergePlan(P.id, job.plan, false).stats;
+    const cnt = state.entries.filter(e => e.projekt === P.id).length;
+    choice = `<fieldset><legend>Das Projekt „${esc(exists.name)}“ gibt es schon (${plural(cnt, 'Eintrag', 'Einträge')}). Was soll passieren?</legend>
+      <label class="opt"><input type="radio" name="impMode" value="merge"><span><strong>Zusammenführen</strong><br><span class="muted">Neu: ${st.neu} · geändert: ${st.geaendert} · unverändert: ${st.gleich}${st.fehlt ? ` · fehlen im neuen Plan: ${st.fehlt}` : ''}. Dein Status, deine Notizen und Verschiebungen bleiben, solange der neue Plan sie nicht ändert.</span></span></label>
+      ${st.fehlt ? `<label class="subopt"><input type="checkbox" id="impDel"> ${st.fehlt === 1 ? 'Den Eintrag, der im neuen Plan fehlt, löschen (sonst bleibt er durchgestrichen stehen)' : `Die ${st.fehlt} Einträge, die im neuen Plan fehlen, löschen (sonst bleiben sie durchgestrichen stehen)`}</label>` : ''}
+      <label class="opt"><input type="radio" name="impMode" value="replace"><span><strong>Ersetzen</strong><br><span class="muted">Alle ${cnt} Einträge von „${esc(exists.name)}“ werden durch den neuen Plan ersetzt, auch selbst angelegte. Dein Status geht dabei verloren.</span></span></label>
+      <label class="opt"><input type="radio" name="impMode" value="new"><span><strong>Als neues Projekt anlegen</strong><br><span class="muted">Der Plan kommt zusätzlich als eigenes Projekt mit eigener Farbe dazu.</span></span></label></fieldset>`;
+  }
+  out.innerHTML = `<div class="pv"><div class="pv-h"><span class="dot" style="--pc:${color}"></span><strong>${esc(P.name)}</strong><span class="pk">${esc(P.kuerzel)}</span><span class="small muted">ID ${esc(P.id)} · ${esc(job.name)}${of}</span></div>
+    <p style="margin:6px 0 10px">${plural(posts, 'Post', 'Posts')} · ${plural(todos, 'To-do', 'To-dos')}${dates.length ? ` · ${fmtDate(dates[0])} bis ${fmtDate(dates[dates.length - 1])}` : ''}</p>
+    ${job.warnings.length ? `<details class="note amber"><summary>${plural(job.warnings.length, 'Hinweis', 'Hinweise')} (automatisch korrigiert, Import möglich)</summary><ul>${job.warnings.slice(0, 40).map(x => `<li>${esc(x)}</li>`).join('')}${job.warnings.length > 40 ? `<li>… und ${job.warnings.length - 40} weitere</li>` : ''}</ul></details>` : ''}
+    ${choice}
+    <div class="mfoot"><span class="spacer"></span>${skip}<button type="button" class="btn primary" data-imp="do" ${exists ? 'disabled' : ''}>Importieren</button></div></div>`;
+  if (exists) $$('input[name=impMode]', out).forEach(r => r.addEventListener('change', () => { $('[data-imp=do]', out).disabled = false; }));
+}
+function nextJob() {
+  imp.jobs.shift();
+  imp.done++;
+  if (!imp.jobs.length) {
+    const m = imp.modal;
+    if (m && imp.done) closeModal(m);
+    return;
+  }
+  showJob();
+}
+function onImpClick(ev) {
+  const b = elOf(ev).closest('[data-imp]');
+  if (!b) return;
+  const k = b.dataset.imp;
+  if (k === 'pick') pickFiles(files => openImport(null, files));
+  else if (k === 'check') { const t = $('#impText', imp.modal).value; if (str(t)) addJobs(jobsFromText('Eingefügter Text', t)); else $('#impText', imp.modal).focus(); }
+  else if (k === 'prompt') copyText(promptText(), 'Prompt kopiert. Im Chat des Projekts einfügen.');
+  else if (k === 'example') download('beispiel-plan.json', exampleText());
+  else if (k === 'example-load') { $('#impText', imp.modal).value = exampleText(); addJobs(jobsFromText('beispiel-plan.json', exampleText())); }
+  else if (k === 'skip') { if (imp.jobs.length > 1) nextJob(); else { imp.jobs = []; showJob(); } }
+  else if (k === 'copy-errors') copyText(imp.jobs[0].errors.join('\n'), 'Fehlerliste kopiert');
+  else if (k === 'restore') { restoreBackup(imp.jobs[0].backup); nextJob(); }
+  else if (k === 'do') {
+    const job = imp.jobs[0];
+    const modeEl = $('input[name=impMode]:checked', imp.modal);
+    const mode = modeEl ? modeEl.value : 'new';
+    const del = !!($('#impDel', imp.modal) || {}).checked;
+    let proj;
+    const verb = { merge: 'zusammengeführt', replace: 'ersetzt', new: 'importiert' }[mode];
+    mutate(`„${job.plan.projekt.name}“ ${verb}`, () => { proj = applyImport(job.plan, mode, del); });
+    if (ui.view === 'monat' || ui.view === 'woche') {
+      const first = job.plan.eintraege.map(e => e.datum).filter(d => d >= TODAY).sort()[0];
+      const visibleNow = visibleEntries().some(e => e.projekt === proj.id && (ui.view === 'monat' ? e.datum.slice(0, 7) === ui.cursor.slice(0, 7) : mondayOf(e.datum) === mondayOf(ui.cursor)));
+      if (first && !visibleNow) { ui.cursor = first; render(); }
+    }
+    nextJob();
+  }
+}
+
+// ================================================================ Backup, Export, Dateien
+function download(name, text) {
+  const blob = new Blob([text], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.rel = 'noopener';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+function pickFiles(cb) {
+  const inp = $('#filepick');
+  inp.value = '';
+  inp.onchange = () => { if (inp.files && inp.files.length) cb(inp.files); };
+  inp.click();
+}
+function backupSave() {
+  const now = new Date().toISOString();
+  const obj = { format: 'social-media-planer-backup', version: 1, erstellt_am: now, daten: { projects: state.projects, entries: state.entries } };
+  download(`social-media-planer-backup-${TODAY}.json`, JSON.stringify(obj, null, 1));
+  state.settings.lastBackup = now;
+  if (!state.settings.lastChange || state.settings.lastChange > now) state.settings.lastChange = now;
+  persist(); render();
+  toast('Backup gespeichert (Ordner „Downloads“)');
+}
+function restoreBackup(b) {
+  const d = b.daten || {};
+  if (!Array.isArray(d.projects) || !Array.isArray(d.entries)) { toast('Das Backup ist unvollständig.'); return; }
+  mutate(`Backup vom ${fmtStamp(b.erstellt_am)} geladen`, () => {
+    const s = migrate({ projects: clone(d.projects), entries: clone(d.entries), settings: state.settings });
+    state.projects = s.projects; state.entries = s.entries;
+  });
+  state.settings.restoredFrom = b.erstellt_am;
+  state.settings.lastBackup = state.settings.lastChange = new Date().toISOString();
+  persist(); render();
+}
+function backupLoad() {
+  pickFiles(files => readFiles(files).then(list => {
+    const f = list[0];
+    const r = parseJSONText(f.text);
+    if (!r.ok) { toast('Die Datei ist kein gültiges JSON.'); return; }
+    if (r.data && r.data.format === 'social-media-planer-backup') {
+      const b = r.data, d = b.daten || {};
+      if (confirm(`Backup vom ${fmtStamp(b.erstellt_am)} laden (${plural((d.projects || []).length, 'Projekt', 'Projekte')}, ${plural((d.entries || []).length, 'Eintrag', 'Einträge')})?\n\nDas ersetzt alle aktuellen Daten in diesem Browser.`)) restoreBackup(b);
+    } else {
+      openImport(null, files);
+    }
+  }));
+}
+function exportPlan(p) {
+  const prune = o => { for (const k of Object.keys(o)) if (o[k] === '' || o[k] === undefined || (Array.isArray(o[k]) && !o[k].length)) delete o[k]; return o; };
+  const es = state.entries.filter(e => e.projekt === p.id && !e.entfernt).sort(cmpEntries);
+  const obj = { format: 'social-media-plan', version: 1, projekt: { id: p.id, name: p.name, kuerzel: p.kuerzel, farbe: p.farbe }, exportiert_am: TODAY,
+    eintraege: es.map(e => prune({ id: e.id, typ: e.typ, nr: e.nr, titel: e.titel, datum: e.datum, uhrzeit: e.uhrzeit, plattform: e.typ === 'post' ? e.plattform : undefined, format: e.format, status: e.status, notiz: e.notiz, link: e.link })) };
+  download(`${p.id}.plan.json`, JSON.stringify(obj, null, 2));
+  toast(`${p.id}.plan.json gespeichert`);
+}
+const exampleText = () => $('#vorlage-beispiel').textContent.trim() + '\n';
+const promptText = () => $('#vorlage-prompt').textContent.trim() + '\n';
+function copyText(text, okMsg) {
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (err) {}
+    ta.remove();
+    if (ok) toast(okMsg);
+    else openModal('Zum Kopieren', `<p class="small muted" style="margin-top:0">Automatisches Kopieren ging nicht. Text markieren (⌘A) und kopieren (⌘C):</p><textarea class="imptext" rows="14" style="width:100%" readonly>${esc(text)}</textarea>`, { wide: true });
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => toast(okMsg), fallback);
+  else fallback();
+}
+
+// ================================================================ Aktionen und Ereignisse
+const elOf = ev => (ev.target && ev.target.nodeType === 1 ? ev.target : (ev.target && ev.target.parentElement) || document.body);
+function setView(v) { ui.view = v; state.settings.view = v; persist(); vbar.innerHTML = ''; render(); window.scrollTo(0, 0); }
+function step(dir) {
+  if (ui.view === 'monat') ui.cursor = addMonths(ui.cursor, dir);
+  else if (ui.view === 'woche') ui.cursor = addDays(ui.cursor, 7 * dir);
+  else return;
+  render();
+}
+function action(a, el) {
+  switch (a) {
+    case 'new': openEditor(null, { datum: el && el.dataset.date }); break;
+    case 'import': openImport(); break;
+    case 'menu': openMainMenu(el); break;
+    case 'toggle-side': document.body.classList.toggle('side-open'); break;
+    case 'prev': step(-1); break;
+    case 'next': step(1); break;
+    case 'today': ui.cursor = TODAY; render(); break;
+    case 'day': openDay(el.dataset.date); break;
+    case 'proj-edit': document.body.classList.remove('side-open'); openProject(el.dataset.pid); break;
+    case 'proj-new': document.body.classList.remove('side-open'); openProject(null); break;
+    case 'backup-save': backupSave(); break;
+    case 'backup-load': backupLoad(); break;
+    case 'backup-later': ui.backupLater = true; renderBanners(); break;
+    case 'copy-prompt': copyText(promptText(), 'Prompt kopiert. Im Chat des Projekts einfügen.'); break;
+    case 'example-download': download('beispiel-plan.json', exampleText()); break;
+    case 'example-load': openImport(exampleText()); break;
+    case 'undo': $('#toast').classList.remove('show'); undo(); break;
+    case 'wipe':
+      if (confirm('Wirklich alle Projekte und Einträge in diesem Browser löschen?\n\nTipp: Vorher „Backup sichern“.')) mutate('Alle Daten gelöscht', () => { state.projects = []; state.entries = []; });
+      break;
+  }
+}
+
+document.addEventListener('click', ev => {
+  const t = elOf(ev);
+  if (t.closest('#pop')) return;
+  if (!pop.hidden) {
+    closePop();
+    const anchor = t.closest('[data-action]');
+    if (anchor && anchor === popAnchor) { popAnchor = null; return; }  // gleicher Knopf: Menü nur schließen
+  }
+  const st = t.closest('[data-action="status"]');
+  if (st && !(isNarrow() && st.closest('.month'))) { popAnchor = st; openStatusMenu(st, st.closest('[data-uid]').dataset.uid); return; }
+  const a = t.closest('[data-action]');
+  if (a && a.dataset.action !== 'status') { if (a.dataset.action === 'menu') popAnchor = a; action(a.dataset.action, a); return; }
+  const v = t.closest('[data-view]');
+  if (v) { setView(v.dataset.view); return; }
+  if (t.closest('.modal') && !t.closest('.daylist')) return;
+  const day = t.closest('.month .day[data-date]');
+  if (day && isNarrow()) { openDay(day.dataset.date); return; }
+  const item = t.closest('[data-uid]');
+  if (item) openEditor(item.dataset.uid);
+});
+document.addEventListener('dblclick', ev => {
+  const t = elOf(ev);
+  if (isNarrow() || t.closest('[data-uid],button')) return;
+  const cell = t.closest('.day[data-date],.wcol[data-date]');
+  if (cell) openEditor(null, { datum: cell.dataset.date });
+});
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.dataset.projToggle) { const p = projById(t.dataset.projToggle); if (p) { p.sichtbar = t.checked; persist(); render(); } }
+  else if (t.dataset.filter) { state.settings[t.dataset.filter] = t.checked; persist(); render(); }
+  else if (t.id === 'listPast') { ui.showPast = t.checked; renderListBody(); }
+});
+document.addEventListener('input', ev => { if (ev.target.id === 'listSearch') { ui.search = ev.target.value; renderListBody(); } });
+document.addEventListener('keydown', ev => {
+  const typing = elOf(ev).closest('input,textarea,select,[contenteditable]');
+  if (ev.key === 'Escape') {
+    if (!pop.hidden) { closePop(); return; }
+    if (modals.length) { closeModal(); return; }
+    document.body.classList.remove('side-open');
+    return;
+  }
+  if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === 'z' && !ev.shiftKey && !typing && !modals.length) { ev.preventDefault(); undo(); return; }
+  if (typing || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('[data-action="status"]')) { ev.preventDefault(); ev.target.click(); return; }
+  if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('[data-uid]')) { openEditor(ev.target.dataset.uid); return; }
+  if (modals.length) return;
+  if (ev.key === 'ArrowLeft') step(-1);
+  else if (ev.key === 'ArrowRight') step(1);
+  else if (ev.key === 't' || ev.key === 'T') { ui.cursor = TODAY; render(); }
+  else if (ev.key === 'n' || ev.key === 'N') { ev.preventDefault(); openEditor(null); }
+  else if (['1', '2', '3', '4'].includes(ev.key)) setView(['heute', 'monat', 'woche', 'liste'][+ev.key - 1]);
+});
+document.addEventListener('paste', ev => {
+  if (elOf(ev).closest('input,textarea')) return;
+  const text = (ev.clipboardData || window.clipboardData).getData('text');
+  if (/^\s*(```|[[{])/.test(text || '')) { ev.preventDefault(); openImport(text); }
+});
+
+// Drag & Drop: Einträge verschieben
+let dragUid = null, overEl = null;
+const clearOver = () => { if (overEl) overEl.classList.remove('drop-over'); overEl = null; };
+document.addEventListener('dragstart', ev => {
+  const c = elOf(ev).closest('.chip[data-uid]');
+  if (!c) return;
+  dragUid = c.dataset.uid;
+  ev.dataTransfer.effectAllowed = 'move';
+  ev.dataTransfer.setData('text/plain', 'smp:' + dragUid);
+  c.classList.add('dragging');
+});
+document.addEventListener('dragend', ev => { const c = elOf(ev).closest('.chip'); if (c) c.classList.remove('dragging'); dragUid = null; clearOver(); });
+document.addEventListener('dragover', ev => {
+  const types = [...(ev.dataTransfer ? ev.dataTransfer.types : [])];
+  if (types.includes('Files')) { ev.preventDefault(); document.body.classList.add('file-over'); return; }
+  if (!dragUid) return;
+  const cell = elOf(ev).closest('[data-drop]');
+  if (!cell) { clearOver(); return; }
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect = 'move';
+  if (cell !== overEl) { clearOver(); overEl = cell; cell.classList.add('drop-over'); }
+});
+document.addEventListener('dragleave', ev => { if (!ev.relatedTarget) document.body.classList.remove('file-over'); });
+document.addEventListener('drop', ev => {
+  const types = [...(ev.dataTransfer ? ev.dataTransfer.types : [])];
+  document.body.classList.remove('file-over');
+  if (types.includes('Files')) { ev.preventDefault(); if (ev.dataTransfer.files.length) openImport(null, ev.dataTransfer.files); return; }
+  const cell = elOf(ev).closest('[data-drop]');
+  const uid = dragUid;
+  clearOver();
+  if (!cell || !uid) return;
+  ev.preventDefault();
+  const e = entryByUid(uid), d = cell.dataset.drop;
+  if (e && e.datum !== d) mutate(`Verschoben auf ${fmtShort(d)}`, () => { e.datum = d; });
+});
+
+// Datum wechselt (App bleibt über Nacht offen)
+const refreshDay = () => { const t = todayISO(); if (t !== TODAY) { TODAY = t; render(); } };
+setInterval(refreshDay, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDay(); });
+matchMedia('(max-width: 760px)').addEventListener('change', () => render());
+
+// Online (GitHub Pages): Manifest und Offline-Cache für den Home-Bildschirm
+if (/^https?:$/.test(location.protocol)) {
+  const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.webmanifest'; document.head.appendChild(l);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+window.__smp = { state: () => state, validatePlan, mergePlan, holidays, parseJSONText };
+render();
+})();
+</script>
+</body>
+</html>

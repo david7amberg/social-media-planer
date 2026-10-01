@@ -204,9 +204,65 @@ const re = await page.evaluate(x => window.__smp.validatePlan(x), exp);
 ok(re.errors.length === 0 && exp.eintraege.find(e => e.id === 'rf-01').status === 'fertig', 'Projekt-Export ist gültiges Importformat mit aktuellem Status');
 await page.keyboard.press('Escape');
 
+// --- Apple Kalender (.ics)
+const icsDownload = async () => {
+  const [d] = await Promise.all([page.waitForEvent('download'), page.click('#icsGo')]);
+  const path = join(OUT, 'kalender.ics');
+  await d.saveAs(path);
+  return { name: d.suggestedFilename(), text: readFileSync(path, 'utf8') };
+};
+await page.click('header [data-action=ics]');
+ok(await page.isVisible('#icsForm'), 'Apple Kalender: Dialog öffnet sich');
+ok(!(await page.isVisible('input[name=modus][value=neu]')), 'Apple Kalender: „Nur Neues“ erst nach der ersten Übertragung');
+await shot('15-ics-dialog');
+s = await state();
+const expectIcs = s.entries.filter(e => !e.entfernt && !['gepostet', 'erledigt'].includes(e.status) && e.datum >= '2026-10-01');
+ok((await page.textContent('#icsGo')).includes(`(${expectIcs.length})`), `Apple Kalender: ${expectIcs.length} Termine angekündigt`);
+let ics = await icsDownload();
+ok(/^social-media-kalender-2026-10-01\.ics$/.test(ics.name), 'Apple Kalender: Dateiname ' + ics.name);
+ok(ics.text.startsWith('BEGIN:VCALENDAR\r\n') && ics.text.endsWith('END:VCALENDAR\r\n') && !/[^\r]\n/.test(ics.text), 'ICS: Rahmen und nur CRLF-Zeilenenden');
+ok(ics.text.split('\r\n').every(l => Buffer.byteLength(l) <= 75), 'ICS: keine Zeile länger als 75 Byte (gefaltet)');
+let un = ics.text.replace(/\r\n /g, '');
+ok(un.split('BEGIN:VEVENT').length - 1 === expectIcs.length, `ICS: ${expectIcs.length} Termine in der Datei`);
+ok(un.includes('DTSTART;VALUE=DATE:20261006\r\nDTEND;VALUE=DATE:20261007\r\nSUMMARY:RF 01 · Links eingerichtet. Rechts leer.'), 'ICS: ganztägiger Termin mit Kürzel und Nummer');
+ok(un.includes('DTSTART;TZID=Europe/Berlin:20261009T183000\r\nDTEND;TZID=Europe/Berlin:20261009T190000') && un.includes('BEGIN:VTIMEZONE\r\nTZID:Europe/Berlin'), 'ICS: Termin mit Uhrzeit (18:30, 30 Minuten, Zeitzone Berlin)');
+ok(un.includes('6 Fragen\\, 6 Antworten'), 'ICS: Komma im Titel korrekt maskiert');
+ok(/SUMMARY:To-do: RF Z1 · /.test(un), 'ICS: To-dos sind als „To-do:“ erkennbar');
+ok(!un.includes('BEGIN:VALARM'), 'ICS: ohne Erinnerung, wenn „keine“ gewählt');
+ok(un.includes('UID:raumfokus-medien-rf-01@social-media-planer'), 'ICS: feste UID pro Eintrag');
+// Zweite Übertragung: nur Neues, mit Erinnerung am Vortag
+await page.click('aside [data-action=ics]');
+ok(await page.isChecked('input[name=modus][value=neu]'), 'Nach der ersten Übertragung ist „Nur Neues“ vorausgewählt');
+ok(await page.isDisabled('#icsGo') && await page.isVisible('#icsInfo >> text=Nichts Neues seit der letzten Übertragung.'), 'Nur Neues: nichts Neues, Knopf gesperrt');
+await page.keyboard.press('Escape');
+await page.click('[data-view=monat]');
+await page.click('[data-action=today]');
+await page.dragAndDrop('.chip[data-uid="raumfokus-medien::rf-04"]', '.day[data-date="2026-10-15"]');
+await page.dblclick('.day[data-date="2026-10-27"]', { position: { x: 60, y: 100 } });
+await page.fill('#edForm [name=titel]', 'Neuer Termin, nach der Übertragung');
+await page.fill('#edForm [name=uhrzeit]', '08:15');
+await page.click('#edForm [type=submit]');
+await page.click('aside [data-action=ics]');
+await page.check('input[name=modus][value=neu]');
+await page.selectOption('#icsForm [name=alarm]', 'tag');
+ok((await page.textContent('#icsGo')).includes('(1)'), 'Nur Neues: genau 1 neuer Termin');
+ok(await page.isVisible('#icsInfo .note.amber'), 'Nur Neues: Hinweis auf geänderten, schon übertragenen Termin (verschoben)');
+await shot('16-ics-nur-neues');
+ics = await icsDownload();
+un = ics.text.replace(/\r\n /g, '');
+ok(un.split('BEGIN:VEVENT').length - 1 === 1 && un.includes('Neuer Termin\\, nach der Übertragung'), 'Nur Neues: Datei enthält nur den neuen Termin');
+ok(un.includes('TRIGGER;VALUE=DATE-TIME:20261027T061500Z'), 'Erinnerung „am selben Tag“: bei 08:15 eine Stunde vorher (07:15 Winterzeit = 06:15 UTC)');
+await page.click('aside [data-action=ics]');
+await page.selectOption('#icsForm [name=alarm]', 'vortag');
+await page.check('input[name=modus][value=alles]');
+ics = await icsDownload();
+un = ics.text.replace(/\r\n /g, '');
+ok(/DTSTART;VALUE=DATE:20261006[\s\S]*?TRIGGER;VALUE=DATE-TIME:20261005T070000Z/.test(un), 'Erinnerung „am Vortag 9:00“ bei ganztägigem Termin (05.10. 07:00 UTC)');
+
 // --- Bleibt nach Neuladen erhalten
+const countBefore = (await state()).entries.length;
 await page.reload();
-ok((await state()).entries.length === backup.daten.entries.length, 'Daten bleiben nach Neuladen erhalten');
+ok((await state()).entries.length === countBefore, 'Daten bleiben nach Neuladen erhalten');
 
 // --- Feiertage
 const hol = await page.evaluate(() => window.__smp.holidays(2026));

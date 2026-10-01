@@ -38,6 +38,7 @@ Jeder Ort hat seinen eigenen Speicher: die lokale Datei am Mac, die Online-Adres
 | **Rückgängig** | Im Hinweis unten auf **Rückgängig** klicken oder `⌘Z` |
 | **Projekte** | In der Seitenleiste ein- und ausblenden. Über `⋯` Farbe, Name und Kürzel ändern oder das Projekt als Plan exportieren |
 | **Farben** | Rot umrandet heißt überfällig. Gelb umrandet heißt: in 2 Tagen fällig und noch nicht fertig |
+| **Apple Kalender** | Knopf **Apple Kalender** oben (auch in der Seitenleiste und unter `⋯`): erstellt eine Kalenderdatei, siehe unten |
 | **Feiertage** | Die Feiertage in Bayern stehen klein im Kalender |
 | **Darstellung** | Folgt der macOS-Einstellung (hell/dunkel). Umschalten unter `⋯ → Darstellung` |
 
@@ -58,6 +59,23 @@ Kennt die App das Projekt schon (gleiche `projekt.id`), fragt sie jedes Mal, was
 - **Als neues Projekt anlegen:** Der Plan kommt zusätzlich mit eigener Farbe dazu.
 
 Damit das klappt, muss jeder Eintrag seine `id` dauerhaft behalten. Das verlangt der Prompt ausdrücklich.
+
+## In Apple Kalender übertragen
+
+1. **Einmalig:** In der Kalender-App unter **Ablage → Neuer Kalender** einen Kalender „Social Media“ anlegen. Lege ihn am besten unter iCloud an, dann erscheinen die Termine auch auf dem iPhone.
+2. Im Planer auf **Apple Kalender** klicken. Projekte, Posts/To-dos, Zeitraum und Erinnerung wählen (Standard: keine Erinnerung), dann **Kalenderdatei erstellen**.
+3. Die Datei `social-media-kalender-….ics` aus „Downloads“ öffnen. Kalender fragt nach dem Ziel: „Social Media“ wählen.
+
+Jeder Eintrag wird ein Termin mit Beschriftung wie im Planer, z. B. „RF 03 · Bereit fürs Shooting? 5 Dinge“. To-dos beginnen mit „To-do:“. Ohne Uhrzeit wird der Termin ganztägig, mit Uhrzeit dauert er 30 Minuten. In der Notiz stehen Projekt, Plattform, Format und Status. Die Termine blockieren keine Zeit („frei“).
+
+**Aktualisieren:** Apple Kalender erkennt bereits importierte Termine nicht wieder und würde sie doppelt anlegen. Du hast deshalb zwei Wege:
+
+- **Nur Neues seit der letzten Übertragung:** Es kommen nur Einträge dazu, die noch nie übertragen wurden. Hat sich ein schon übertragener Termin geändert (Datum, Uhrzeit oder Titel), weist der Dialog darauf hin. Der alte Termin bleibt dann im Kalender stehen.
+- **Sauber neu:** Den Kalender „Social Media“ in der Kalender-App löschen, neu anlegen und **Alles** übertragen.
+
+Ein automatisches Abo, das sich selbst aktualisiert, bräuchte einen Server. Darauf verzichtet der Planer bewusst, damit deine Daten nur bei dir bleiben.
+
+Erinnerungen sind optional: am Vortag um 9:00 oder am selben Tag um 9:00. Liegt ein Termin vor 10 Uhr, erinnert der Kalender eine Stunde vorher.
 
 ## Daten und Backup
 

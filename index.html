@@ -267,6 +267,7 @@ legend{padding:0;font-weight:600}
 
 /* ---------- Schmal (iPhone) */
 .only-narrow{display:none}
+@media (max-width:1080px){ .wide-only{display:none} .brand span{display:none} }
 @media (max-width:760px){
   :root{--top:52px}
   .only-narrow{display:inline-grid}
@@ -331,6 +332,7 @@ legend{padding:0;font-weight:600}
   <div class="spacer"></div>
   <button class="btn primary" data-action="new" title="Neuer Eintrag (N)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg><span class="hide-narrow">Eintrag</span></button>
   <button class="btn hide-narrow" data-action="import">Importieren</button>
+  <button class="btn hide-narrow" data-action="ics" title="Termine in Apple Kalender übertragen"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1.75" y="2.75" width="12.5" height="11.5" rx="2.5"/><path d="M1.75 6.25h12.5M5 1.25v2.5M11 1.25v2.5"/><path d="M8 8.25v4M6.25 10.5L8 12.25l1.75-1.75" stroke-linejoin="round"/></svg><span class="wide-only">Apple Kalender</span></button>
   <button class="iconbtn" data-action="menu" aria-label="Menü">
     <svg viewBox="0 0 20 20" fill="currentColor"><circle cx="4.5" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="15.5" cy="10" r="1.6"/></svg>
   </button>
@@ -682,7 +684,7 @@ const ui = { view: null, cursor: TODAY, search: '', showPast: false, backupLater
 const undoStack = [];
 
 function emptyState() {
-  return { version: 1, projects: [], entries: [], settings: { theme: 'auto', view: '', lastBackup: null, lastChange: null, restoredFrom: null, hideDone: false, showPost: true, showTodo: true } };
+  return { version: 1, projects: [], entries: [], settings: { theme: 'auto', view: '', lastBackup: null, lastChange: null, restoredFrom: null, hideDone: false, showPost: true, showTodo: true, ics: null, icsSent: {}, icsLast: null } };
 }
 function migrate(s) {
   const e = emptyState();
@@ -691,6 +693,7 @@ function migrate(s) {
   s.projects = Array.isArray(s.projects) ? s.projects : [];
   s.entries = Array.isArray(s.entries) ? s.entries : [];
   s.settings = Object.assign(e.settings, s.settings || {});
+  if (!s.settings.icsSent || typeof s.settings.icsSent !== 'object') s.settings.icsSent = {};
   s.projects = s.projects.filter(p => p && p.id).map(p => Object.assign(p, { id: String(p.id), name: str(p.name) || String(p.id), kuerzel: str(p.kuerzel), farbe: hexToRgb(p.farbe) ? p.farbe : '#5B6B7A' }));
   s.entries = s.entries.filter(x => x && x.projekt && x.id != null && /^\d{4}-\d{2}-\d{2}$/.test(x.datum || ''));
   s.entries.forEach(x => {
@@ -904,6 +907,9 @@ function renderSide() {
     ${statusSVG('post', 'offen')}<span>Post offen</span>${statusSVG('post', 'in_arbeit')}<span>in Arbeit</span>${statusSVG('post', 'fertig')}<span>fertig (bereit zum Posten)</span>${statusSVG('post', 'gepostet')}<span>gepostet</span>
     ${statusSVG('todo', 'offen')}<span>To-do offen</span>${statusSVG('todo', 'erledigt')}<span>To-do erledigt</span>
     <span class="lg-ring r"></span><span>überfällig</span><span class="lg-ring a"></span><span>in 2 Tagen, noch nicht fertig</span></div></section>
+  <section><h3>Apple Kalender</h3>
+    <p class="datainfo">Termine als Kalenderdatei übertragen.${st.icsLast ? `<br>Zuletzt übertragen: ${fmtStamp(st.icsLast)}` : ''}</p>
+    <button class="btn sm" data-action="ics">In Apple Kalender übertragen …</button></section>
   <section><h3>Daten</h3>
     <p class="datainfo">Gespeichert in diesem Browser auf diesem Gerät.<br>Letzte Änderung: ${fmtStamp(st.lastChange)}<br>Letztes Backup: ${fmtStamp(st.lastBackup)}${st.restoredFrom ? `<br>Geladen aus Backup vom ${fmtStamp(st.restoredFrom)}` : ''}</p>
     <div class="btnrow"><button class="btn sm" data-action="backup-save">Backup sichern</button><button class="btn sm" data-action="backup-load">Backup laden</button></div></section>`;
@@ -1100,6 +1106,7 @@ function openMainMenu(anchor) {
   openPop(anchor, `
     <button class="mi" data-m="import">Plan importieren …</button>
     <hr><button class="mi" data-m="backup-save">Backup sichern</button><button class="mi" data-m="backup-load">Backup laden …</button>
+    <hr><button class="mi" data-m="ics">In Apple Kalender übertragen …</button>
     <hr><button class="mi" data-m="copy-prompt">Prompt für Chats kopieren</button><button class="mi" data-m="example-download">Beispieldatei herunterladen</button>
     <hr><div class="mlabel">Darstellung</div>${opt('auto', 'Automatisch (wie macOS)')}${opt('light', 'Hell')}${opt('dark', 'Dunkel')}
     <hr><button class="mi danger" data-m="wipe">Alle Daten löschen …</button>`, b => {
@@ -1206,7 +1213,7 @@ function openProject(pid) {
     <div class="gridnr" style="grid-template-columns:1fr 90px"><label class="field">Name<input name="name" value="${esc(d.name)}" required autofocus></label><label class="field">Kürzel<input name="kuerzel" value="${esc(d.kuerzel)}" maxlength="4" placeholder="${esc(abbr(d.name) || 'AB')}"></label></div>
     <div class="field">Farbe<div class="swatches" id="pjSw"></div></div>
     ${p ? `<p class="small muted">ID: <code>${esc(p.id)}</code> · ${plural(count, 'Eintrag', 'Einträge')}${p.importiert_am ? ` · zuletzt importiert ${fmtStamp(p.importiert_am)}` : ''}</p>
-    <div class="btnrow" style="margin-bottom:8px"><button type="button" class="btn sm" data-pj="export">Als Plan exportieren</button></div>
+    <div class="btnrow" style="margin-bottom:8px"><button type="button" class="btn sm" data-pj="export">Als Plan exportieren</button><button type="button" class="btn sm" data-pj="ics">Nur dieses Projekt in Apple Kalender …</button></div>
     <p class="small muted" style="margin-top:0">Der Export hat das Import-Format, mit deinem aktuellen Status. Du kannst ihn einem Chat geben, damit er auf dem neuesten Stand weiterplant.</p>` : ''}
     <div class="mfoot">${p ? '<button type="button" class="btn danger" data-pj="delete">Projekt löschen</button>' : ''}<span class="spacer"></span><button type="button" class="btn" data-close>Abbrechen</button><button type="submit" class="btn primary">${p ? 'Speichern' : 'Anlegen'}</button></div>
   </form>`;
@@ -1224,6 +1231,7 @@ function openProject(pid) {
     if (!t) return;
     if (t.dataset.c) { d.farbe = t.dataset.c; drawSw(); }
     else if (t.dataset.pj === 'export') exportPlan(p);
+    else if (t.dataset.pj === 'ics') openIcs(p.id);
     else if (t.dataset.pj === 'delete') {
       if (!confirm(`Projekt „${p.name}“ mit ${plural(count, 'Eintrag', 'Einträgen')} löschen?`)) return;
       closeModal(m);
@@ -1549,8 +1557,8 @@ function onImpClick(ev) {
 }
 
 // ================================================================ Backup, Export, Dateien
-function download(name, text) {
-  const blob = new Blob([text], { type: 'application/json' });
+function download(name, text, type = 'application/json') {
+  const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = name; a.rel = 'noopener';
@@ -1604,6 +1612,147 @@ function exportPlan(p) {
   download(`${p.id}.plan.json`, JSON.stringify(obj, null, 2));
   toast(`${p.id}.plan.json gespeichert`);
 }
+// ================================================================ Apple Kalender (.ics)
+// Apple Kalender liest die Datei als einmaligen Import. Bereits importierte Termine erkennt er nicht wieder
+// (die UID wird ignoriert), deshalb merkt sich die App, was schon übertragen wurde ("Nur Neues").
+// Erinnerung "am selben Tag": 9:00 Uhr; liegt der Termin vor 10 Uhr, eine Stunde vor Beginn.
+const ALARMS = [['keine', 'keine'], ['vortag', 'am Vortag um 9:00'], ['tag', 'am selben Tag um 9:00']];
+const icsEsc = s => String(s ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+function icsFold(line) {
+  const enc = new TextEncoder();
+  if (enc.encode(line).length <= 75) return line;
+  const out = [];
+  let cur = '', len = 0;
+  for (const ch of line) {
+    const l = enc.encode(ch).length;
+    if (len + l > 75) { out.push(cur); cur = ' '; len = 1; }
+    cur += ch; len += l;
+  }
+  out.push(cur);
+  return out.join('\r\n');
+}
+const icsDay = s => s.replace(/-/g, '');
+const icsUtc = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+const icsLocal = (day, hhmm) => `${icsDay(day)}T${hhmm.replace(':', '')}00`;
+const VTZ_BERLIN = ['BEGIN:VTIMEZONE', 'TZID:Europe/Berlin',
+  'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
+  'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
+  'END:VTIMEZONE'];
+const icsSummary = e => `${DONE(e.status) ? '✓ ' : ''}${e.typ === 'todo' ? 'To-do: ' : ''}${entryLabel(e)}`;
+const icsSig = e => JSON.stringify([entryLabel(e), e.typ, e.datum, e.uhrzeit || '']);
+function icsSelect(cfg, sel) {
+  return state.entries.filter(e => sel.has(e.projekt) && !e.entfernt
+    && (e.typ === 'todo' ? cfg.todos : cfg.posts)
+    && !(cfg.ohneErledigt && DONE(e.status))
+    && (cfg.zeitraum === 'alles' || e.datum >= TODAY || warnLevel(e) === 'overdue')).sort(cmpEntries);
+}
+function icsEvent(e, alarm, stamp) {
+  const p = projById(e.projekt) || {};
+  const L = ['BEGIN:VEVENT', `UID:${e.uid.replace(/[^A-Za-z0-9._-]+/g, '-')}@social-media-planer`, `DTSTAMP:${stamp}`];
+  let alarmAt = null;
+  if (e.uhrzeit) {
+    const [h, mi] = e.uhrzeit.split(':').map(Number);
+    const endMin = h * 60 + mi + 30;
+    const endDay = endMin >= 1440 ? addDays(e.datum, 1) : e.datum;
+    const em = endMin % 1440;
+    L.push(`DTSTART;TZID=Europe/Berlin:${icsLocal(e.datum, e.uhrzeit)}`, `DTEND;TZID=Europe/Berlin:${icsLocal(endDay, `${pad(Math.floor(em / 60))}:${pad(em % 60)}`)}`);
+    const [y, m, d] = e.datum.split('-').map(Number);
+    if (alarm === 'vortag') alarmAt = new Date(y, m - 1, d - 1, 9, 0);
+    else if (alarm === 'tag') alarmAt = h >= 10 ? new Date(y, m - 1, d, 9, 0) : new Date(y, m - 1, d, h - 1, mi);
+  } else {
+    L.push(`DTSTART;VALUE=DATE:${icsDay(e.datum)}`, `DTEND;VALUE=DATE:${icsDay(addDays(e.datum, 1))}`);
+    const [y, m, d] = e.datum.split('-').map(Number);
+    if (alarm === 'vortag') alarmAt = new Date(y, m - 1, d - 1, 9, 0);
+    else if (alarm === 'tag') alarmAt = new Date(y, m - 1, d, 9, 0);
+  }
+  const desc = [p.name ? `Projekt: ${p.name}` : '', e.typ === 'post' && e.plattform.length ? `Plattform: ${e.plattform.join(', ')}` : '',
+    e.format ? `Format: ${e.format}` : '', `Status beim Übertragen: ${statusLabel(e.typ, e.status)}`, e.notiz ? `Notiz: ${e.notiz}` : '', e.link ? `Link: ${e.link}` : ''].filter(Boolean).join('\n');
+  L.push(`SUMMARY:${icsEsc(icsSummary(e))}`, `DESCRIPTION:${icsEsc(desc)}`, 'TRANSP:TRANSPARENT');
+  if (p.name) L.push(`CATEGORIES:${icsEsc(p.name)}`);
+  if (/^https?:\/\/\S+$/.test(e.link || '')) L.push(`URL:${e.link}`);
+  if (alarmAt) L.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEsc(icsSummary(e))}`, `TRIGGER;VALUE=DATE-TIME:${icsUtc(alarmAt)}`, 'END:VALARM');
+  L.push('END:VEVENT');
+  return L;
+}
+function buildIcs(list, alarm) {
+  const stamp = icsUtc(new Date());
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Social-Media-Planer//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:Social Media', 'X-WR-TIMEZONE:Europe/Berlin'];
+  if (list.some(e => e.uhrzeit)) L.push(...VTZ_BERLIN);
+  for (const e of list) L.push(...icsEvent(e, alarm, stamp));
+  L.push('END:VCALENDAR');
+  return L.map(icsFold).join('\r\n') + '\r\n';
+}
+function openIcs(pid) {
+  closeAllModals();
+  if (!state.projects.length) { toast('Noch keine Projekte. Importiere zuerst einen Plan.'); return; }
+  const st = state.settings;
+  const cfg = Object.assign({ zeitraum: 'ab_heute', ohneErledigt: true, alarm: 'keine', posts: true, todos: true, modus: 'alles' }, st.ics || {});
+  const sel = new Set(pid ? [pid] : state.projects.filter(p => p.sichtbar !== false).map(p => p.id));
+  if (!sel.size) state.projects.forEach(p => sel.add(p.id));
+  const sentAny = Object.keys(st.icsSent).length > 0;
+  cfg.modus = sentAny ? 'neu' : 'alles';  // nach der ersten Übertragung "Nur Neues" vorschlagen, sonst entstehen Doppelte
+  const radio = (name, val, label, sub) => `<label class="opt"><input type="radio" name="${name}" value="${val}" ${cfg[name] === val ? 'checked' : ''}><span><strong>${label}</strong>${sub ? `<br><span class="muted">${sub}</span>` : ''}</span></label>`;
+  const html = `<form id="icsForm">
+    <div class="field">Projekte<div class="plats">${state.projects.map(p => `<label><input type="checkbox" name="proj" value="${esc(p.id)}" ${sel.has(p.id) ? 'checked' : ''} style="accent-color:${p.farbe}"> ${esc(p.name)}</label>`).join('')}</div></div>
+    <div class="field">Was<div class="plats"><label><input type="checkbox" name="posts" ${cfg.posts ? 'checked' : ''}> Posts</label><label><input type="checkbox" name="todos" ${cfg.todos ? 'checked' : ''}> To-dos</label><label><input type="checkbox" name="ohneErledigt" ${cfg.ohneErledigt ? 'checked' : ''}> Gepostetes und Erledigtes weglassen</label></div></div>
+    <div class="grid2">
+      <label class="field">Zeitraum<select name="zeitraum"><option value="ab_heute" ${cfg.zeitraum === 'ab_heute' ? 'selected' : ''}>ab heute (und Überfälliges)</option><option value="alles" ${cfg.zeitraum === 'alles' ? 'selected' : ''}>alles</option></select></label>
+      <label class="field">Erinnerung im Kalender<select name="alarm">${ALARMS.map(([k, l]) => `<option value="${k}" ${cfg.alarm === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+    </div>
+    <fieldset style="margin-top:0"><legend class="small muted" style="font-weight:500">Übertragen</legend>
+      ${radio('modus', 'alles', 'Alles', 'Für den ersten Import oder in einen vorher geleerten Kalender.')}
+      ${sentAny ? radio('modus', 'neu', 'Nur Neues seit der letzten Übertragung', `Zuletzt übertragen: ${fmtStamp(st.icsLast)}. Bereits übertragene Termine kommen nicht noch einmal.`) : ''}
+    </fieldset>
+    <div id="icsInfo" style="margin-top:12px"></div>
+    <details class="note" style="background:var(--surface2)" ${st.icsLast ? '' : 'open'}><summary><strong>So kommt es in Apple Kalender</strong></summary><ol style="margin:8px 0 0;padding-left:18px">
+      <li>Einmalig: in der Kalender-App <em>Ablage → Neuer Kalender</em> einen Kalender „Social Media“ anlegen, am besten unter iCloud, dann siehst du die Termine auch auf dem iPhone.</li>
+      <li>Hier auf <em>Kalenderdatei erstellen</em> klicken und die Datei aus „Downloads“ öffnen (Doppelklick).</li>
+      <li>Kalender fragt, wohin die Termine sollen: „Social Media“ wählen.</li></ol>
+      <p style="margin:8px 0 0"><strong>Aktualisieren:</strong> Apple Kalender erkennt schon übertragene Termine nicht wieder und legt sie sonst doppelt an. Entweder „Nur Neues“ wählen, oder den Kalender „Social Media“ löschen, neu anlegen und „Alles“ übertragen.</p></details>
+    <div class="mfoot"><span class="spacer"></span><button type="button" class="btn" data-close>Abbrechen</button><button type="submit" class="btn primary" id="icsGo">Kalenderdatei erstellen</button></div>
+  </form>`;
+  const m = openModal('In Apple Kalender übertragen', html, { wide: true });
+  const f = $('#icsForm', m);
+  const read = () => ({
+    posts: f.posts.checked, todos: f.todos.checked, ohneErledigt: f.ohneErledigt.checked, zeitraum: f.zeitraum.value, alarm: f.alarm.value,
+    modus: ($('input[name=modus]:checked', f) || {}).value || 'alles',
+  });
+  const plan = () => {
+    const c = read();
+    const chosen = new Set($$('input[name=proj]:checked', f).map(x => x.value));
+    const all = icsSelect(c, chosen);
+    const list = c.modus === 'neu' ? all.filter(e => !st.icsSent[e.uid]) : all;
+    const changed = c.modus === 'neu' ? all.filter(e => st.icsSent[e.uid] && st.icsSent[e.uid] !== icsSig(e)) : [];
+    return { c, list, changed };
+  };
+  const update = () => {
+    const { list, changed } = plan();
+    const posts = list.filter(e => e.typ === 'post').length;
+    $('#icsInfo', m).innerHTML = (list.length
+      ? `<p style="margin:0 0 8px"><strong>${plural(list.length, 'Termin', 'Termine')}</strong> (${plural(posts, 'Post', 'Posts')}, ${plural(list.length - posts, 'To-do', 'To-dos')})${list.length ? ` · ${fmtDate(list[0].datum)} bis ${fmtDate(list[list.length - 1].datum)}` : ''}</p>`
+      : `<p class="muted" style="margin:0 0 8px">${read().modus === 'neu' ? 'Nichts Neues seit der letzten Übertragung.' : 'Keine Termine für diese Auswahl.'}</p>`)
+      + (changed.length ? `<div class="note amber">${plural(changed.length, 'bereits übertragener Termin hat', 'bereits übertragene Termine haben')} sich seitdem geändert (Datum, Uhrzeit oder Titel), z. B. „${esc(entryLabel(changed[0]))}“. Die alten Termine bleiben im Kalender stehen. Für einen sauberen Stand den Kalender leeren und „Alles“ übertragen.</div>` : '');
+    $('#icsGo', m).disabled = !list.length;
+    $('#icsGo', m).textContent = list.length ? `Kalenderdatei erstellen (${list.length})` : 'Kalenderdatei erstellen';
+  };
+  f.addEventListener('change', update);
+  update();
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const { c, list } = plan();
+    if (!list.length) return;
+    download(`social-media-kalender-${TODAY}.ics`, buildIcs(list, c.alarm), 'text/calendar');
+    if (c.modus === 'alles') st.icsSent = {};
+    for (const e of list) st.icsSent[e.uid] = icsSig(e);
+    st.ics = { posts: c.posts, todos: c.todos, ohneErledigt: c.ohneErledigt, zeitraum: c.zeitraum, alarm: c.alarm };
+    st.icsLast = new Date().toISOString();
+    persist();
+    closeModal(m);
+    renderSide();
+    toast(`${plural(list.length, 'Termin', 'Termine')} als Kalenderdatei gespeichert. In „Downloads“ öffnen und „Social Media“ wählen.`);
+  });
+}
+
 const exampleText = () => $('#vorlage-beispiel').textContent.trim() + '\n';
 const promptText = () => $('#vorlage-prompt').textContent.trim() + '\n';
 function copyText(text, okMsg) {
@@ -1646,6 +1795,7 @@ function action(a, el) {
     case 'backup-load': backupLoad(); break;
     case 'backup-later': ui.backupLater = true; renderBanners(); break;
     case 'copy-prompt': copyText(promptText(), 'Prompt kopiert. Im Chat des Projekts einfügen.'); break;
+    case 'ics': document.body.classList.remove('side-open'); openIcs(); break;
     case 'example-download': download('beispiel-plan.json', exampleText()); break;
     case 'example-load': openImport(exampleText()); break;
     case 'undo': $('#toast').classList.remove('show'); undo(); break;
@@ -1761,7 +1911,7 @@ if (/^https?:$/.test(location.protocol)) {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
-window.__smp = { state: () => state, validatePlan, mergePlan, holidays, parseJSONText };
+window.__smp = { state: () => state, validatePlan, mergePlan, holidays, parseJSONText, buildIcs };
 render();
 })();
 </script>
